@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e18">
 <title>钢铁洪流 - 坦克大战</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -19,7 +20,15 @@
     position: relative;
     width: 100%; height: 100%;
     display: flex; justify-content: center; align-items: center;
-    background: radial-gradient(ellipse at center, #1a1a3a 0%, #05050f 100%);
+    /* 钢铁洪流主题：拉丝钢纹 + 铆钉阵列 + 军械库灯光 */
+    background-color: #060910;
+    background-image:
+      radial-gradient(ellipse 80% 55% at 50% 36%, rgba(110,160,255,0.10), rgba(110,160,255,0) 62%),
+      radial-gradient(circle, rgba(150,185,255,0.09) 1.2px, transparent 2px),
+      repeating-linear-gradient(115deg, rgba(255,255,255,0.018) 0 2px, transparent 2px 26px),
+      repeating-linear-gradient(0deg, rgba(130,170,255,0.026) 0 1px, transparent 1px 44px),
+      radial-gradient(ellipse at 50% 50%, #1b2334 0%, #0d1220 52%, #060910 100%);
+    background-size: auto, 48px 48px, auto, auto, auto;
   }
   canvas {
     display: block;
@@ -27,8 +36,12 @@
     image-rendering: -moz-crisp-edges;
     image-rendering: crisp-edges;
     background: #111122;
-    border: 4px solid #2a2a4a;
-    box-shadow: 0 0 30px rgba(80, 180, 255, 0.3), inset 0 0 60px rgba(0,0,0,0.5);
+    border: 4px solid #3a4a66;
+    box-shadow: 0 0 0 2px #141c2e, 0 0 34px rgba(70,130,220,0.28), inset 0 0 60px rgba(0,0,0,0.5);
+    /* 移动端自适应：保持 4:3 等比缩放 */
+    max-width: 100vw;
+    max-height: 100vh;
+    max-height: 100dvh;
   }
   /* 主菜单 */
   #menu-overlay {
@@ -60,8 +73,14 @@
     font-size: 14px;
     color: #6fb5ff;
     letter-spacing: 6px;
-    margin-bottom: 60px;
+    margin-bottom: 8px;
     text-shadow: 0 0 10px rgba(111, 181, 255, 0.6);
+  }
+  .menu-thanks {
+    font-size: 10px;
+    color: #6677aa;
+    letter-spacing: 3px;
+    margin-bottom: 42px;
   }
   .menu-btn {
     width: 280px;
@@ -105,12 +124,54 @@
     background: linear-gradient(180deg, #33cc66 0%, #228844 100%);
     box-shadow: 0 6px 0 #003311, 0 0 25px rgba(80, 255, 120, 0.7);
   }
-  .menu-footer {
-    position: absolute;
-    bottom: 24px;
+  .thanks-link {
+    color: #6677bb;
+    text-decoration: underline dotted;
+    cursor: pointer;
+  }
+  .thanks-link:hover { color: #6fb5ff; }
+  /* 致谢面板 */
+  #thanks-overlay {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: none;
+    flex-direction: column;
+    justify-content: center; align-items: center;
+    background: rgba(5, 5, 20, 0.85);
+    z-index: 210;
+  }
+  #thanks-overlay.active { display: flex; }
+  .thanks-card {
+    max-width: 560px;
+    padding: 36px 48px;
+    background: rgba(15, 15, 40, 0.92);
+    border: 2px solid #3a3a6a;
+    text-align: center;
+  }
+  .thanks-title {
+    font-size: 20px;
+    color: #6fb5ff;
+    letter-spacing: 6px;
+    margin-bottom: 10px;
+  }
+  .thanks-sub {
     font-size: 10px;
     color: #5566aa;
+    letter-spacing: 3px;
+    margin-bottom: 24px;
+  }
+  .thanks-body {
+    font-size: 11px;
+    line-height: 2.2;
+    color: #aabbff;
+    margin-bottom: 18px;
+  }
+  .thanks-body b { color: #d9e6ff; font-weight: normal; }
+  .thanks-sign {
+    font-size: 9px;
+    color: #5566aa;
     letter-spacing: 2px;
+    margin-bottom: 26px;
   }
   /* 选择坦克面板 */
   #tank-select {
@@ -232,6 +293,106 @@
     100% { transform: translateX(-50%) translateY(0); opacity: 1; }
   }
   #tutorial-dialog.active { display: flex !important; }
+  /* ===== 移动端触控控件（仅触屏设备、游戏中显示） ===== */
+  #touch-controls {
+    position: absolute; inset: 0;
+    z-index: 170;
+    display: none;
+    pointer-events: none;
+  }
+  #touch-controls.on { display: block; }
+  #tc-joy {
+    position: absolute; left: 22px; bottom: 30px;
+    width: 132px; height: 132px; border-radius: 50%;
+    background: rgba(18,26,48,0.55);
+    border: 2px solid rgba(110,160,255,0.45);
+    box-shadow: 0 0 18px rgba(60,110,200,0.25), inset 0 0 24px rgba(0,0,0,0.45);
+    pointer-events: auto; touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #tc-knob {
+    position: absolute; left: 50%; top: 50%;
+    width: 58px; height: 58px; margin: -29px 0 0 -29px;
+    border-radius: 50%;
+    background: rgba(90,140,230,0.55);
+    border: 2px solid rgba(160,200,255,0.8);
+    box-shadow: 0 0 12px rgba(90,150,255,0.5);
+  }
+  .tc-btn {
+    position: absolute;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; font-size: 26px; color: #fff;
+    background: rgba(20,30,55,0.6);
+    border: 2px solid rgba(255,140,70,0.55);
+    box-shadow: 0 0 14px rgba(255,120,50,0.25), inset 0 0 16px rgba(0,0,0,0.4);
+    pointer-events: auto; touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tc-btn.press { transform: scale(0.92); filter: brightness(1.5); }
+  #tc-fire { right: 24px; bottom: 30px; width: 86px; height: 86px; }
+  #tc-skill {
+    right: 36px; bottom: 138px; width: 64px; height: 64px;
+    font-size: 22px; color: #bfe8ff;
+    border-color: rgba(120,220,255,0.55);
+    box-shadow: 0 0 14px rgba(80,200,255,0.3), inset 0 0 16px rgba(0,0,0,0.4);
+  }
+  #tc-pause {
+    position: absolute; top: 12px; right: 12px;
+    width: 42px; height: 42px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; font-size: 16px; color: #9fc0ff;
+    background: rgba(18,26,48,0.6);
+    border: 1px solid rgba(110,160,255,0.4);
+    pointer-events: auto; touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* ===== 进入模式温馨提示 ===== */
+  #mode-tip {
+    position: absolute; top: 64px; left: 50%;
+    transform: translateX(-50%);
+    max-width: 86vw;
+    padding: 10px 18px;
+    text-align: center;
+    background: rgba(10,16,34,0.88);
+    border: 1px solid #3a5a8a;
+    border-radius: 4px;
+    color: #bcd6ff; font-size: 11px; letter-spacing: 1px; line-height: 1.8;
+    z-index: 260; pointer-events: none; opacity: 0;
+  }
+  #mode-tip.show { animation: tipFade 3.4s ease forwards; }
+  @keyframes tipFade {
+    0% { opacity: 0; transform: translate(-50%, -8px); }
+    12% { opacity: 1; transform: translate(-50%, 0); }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  /* ===== 移动端响应式（窄屏 / 矮屏适配） ===== */
+  @media (pointer: coarse) {
+    body { overscroll-behavior: none; }
+  }
+  @media (max-width: 700px) {
+    .game-title { font-size: 34px; letter-spacing: 3px; }
+    .game-subtitle { font-size: 11px; letter-spacing: 4px; margin-bottom: 6px; }
+    .menu-thanks { margin-bottom: 18px; }
+    .menu-btn { width: min(78vw, 280px); padding: 13px 18px; font-size: 12px; margin: 6px; }
+    #menu-overlay { padding: 24px 0 44px; overflow-y: auto; }
+    .tank-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .tank-card { width: min(42vw, 180px); padding: 14px 10px; }
+    #tank-select { overflow-y: auto; padding: 20px 0; touch-action: pan-y; }
+    .select-title { font-size: 18px; margin-bottom: 20px; }
+    .result-title { font-size: 32px; }
+    .result-stats { padding: 16px 22px; font-size: 12px; }
+    .thanks-card { max-width: 92vw; padding: 24px 18px; }
+    .thanks-body { font-size: 10px; }
+  }
+  @media (max-height: 560px) {
+    .game-title { font-size: 26px; margin-bottom: 4px; }
+    .game-subtitle { margin-bottom: 4px; }
+    .menu-thanks { margin-bottom: 10px; }
+    .menu-btn { padding: 9px 14px; font-size: 11px; margin: 4px; }
+    .result-title { font-size: 26px; margin-bottom: 14px; }
+    .result-stats { margin-bottom: 16px; }
+  }
 </style>
 </head>
 <body>
@@ -242,6 +403,7 @@
   <div id="menu-overlay">
     <div class="game-title">钢铁洪流</div>
     <div class="game-subtitle">TANK  BATTLE</div>
+    <div class="menu-thanks">🙏 <span class="thanks-link" onclick="document.getElementById('thanks-overlay').classList.add('active')">致谢 · 谢谢同行</span></div>
     <button class="menu-btn orange" onclick="Game.startTutorial()">🎮 单人闯关</button>
     <button class="menu-btn green" onclick="Game.startMode('coop')">👥 双人协作</button>
     <button class="menu-btn" onclick="Game.startMode('pvp')">⚔ 双人对抗</button>
@@ -253,7 +415,6 @@
       <button class="menu-btn" onclick="Game.showTutorial('coop')"  style="width:300px;background:linear-gradient(180deg,#234a2f,#102a1d);border-color:#66cc88;color:#d9ffd9;">📖 重看双人协作教程（7步）</button>
       <button class="menu-btn" onclick="Game.showTutorial('pvp')"   style="width:300px;background:linear-gradient(180deg,#4a2a2a,#2a1010);border-color:#ff7766;color:#ffd9d9;">📖 重看双人对抗教程（7步）</button>
     </div>
-    <div class="menu-footer">浪尖儿大学社区 · 原创出品</div>
   </div>
 
   <!-- 坦克选择 -->
@@ -292,6 +453,36 @@
       <button class="menu-btn" onclick="Game.quitToMenuFromPause()" style="width:280px;">⌂ 返回主菜单</button>
     </div>
     <div style="margin-top:28px;font-size:11px;color:#6688aa;letter-spacing:2px;">提示：按 ESC 或 P 键可随时暂停 / 保存后下次打开成就不丢失</div>
+  </div>
+
+  <!-- 移动端触控（摇杆 + 开火/技能/暂停） -->
+  <div id="touch-controls">
+    <div id="tc-pause">⏸</div>
+    <div id="tc-joy"><div id="tc-knob"></div></div>
+    <div id="tc-skill" class="tc-btn">⚡</div>
+    <div id="tc-fire" class="tc-btn">🔥</div>
+  </div>
+
+  <!-- 进入模式温馨提示 -->
+  <div id="mode-tip"></div>
+
+  <!-- 致谢面板 -->
+  <div id="thanks-overlay" onclick="if(event.target===this)this.classList.remove('active')">
+    <div class="thanks-card">
+      <div class="thanks-title">致 谢</div>
+      <div class="thanks-sub">THANKS · 谢谢同行</div>
+      <div class="thanks-body">
+        这是一份新人作品，难免稚嫩，感谢包容。<br>
+        衷心感谢<b>浪尖儿社区</b>的每一位同行者：<br>
+        是你们的热心反馈、耐心指点与并肩前行，<br>
+        让这辆小坦克一步步开到今天。<br>
+        把每一次交流，变成下一次出发。<br>
+        愿我们继续在真实的社区里交换经验，<br>
+        也把微小的想法，做成有用的改变。
+      </div>
+      <div class="thanks-sign">—— 浪尖儿社区 · 钢铁洪流 · 2026 ——</div>
+      <button class="menu-btn" onclick="document.getElementById('thanks-overlay').classList.remove('active')" style="width:160px;font-size:11px;padding:10px 20px;">返回</button>
+    </div>
   </div>
 </div>
 
@@ -391,6 +582,107 @@ const InputManager = {
       firePressed: this.wasPressed('enter') || this.wasPressed('/'),
       skill: this.wasPressed('\\') || this.wasPressed('shift')
     };
+  },
+  // —— 虚拟输入（移动端触控写入，与键盘完全同源） ——
+  setVirtual(key, down) {
+    const k = key.toLowerCase();
+    if (down && !this.keys[k]) this.pressedThisFrame[k] = true;
+    this.keys[k] = down;
+  },
+  tapVirtual(key) {
+    this.pressedThisFrame[key.toLowerCase()] = true;
+  }
+};
+
+// ============================================================
+// 移动端触控：虚拟摇杆 + 开火/技能/暂停（仅触屏设备启用）
+// 与键盘输入同源写入 InputManager，PC 端功能完全等效
+// ============================================================
+const TouchControls = {
+  enabled: false,
+  init() {
+    // ?touch=1 可在桌面浏览器强制启用（调试/验证用）；真机由触控能力自动判定
+    const forced = /[?&]touch=1/.test(location.search);
+    if (!forced && !matchMedia('(pointer: coarse)').matches && !('ontouchstart' in window)) return;
+    this.enabled = true;
+    const joy = document.getElementById('tc-joy');
+    const knob = document.getElementById('tc-knob');
+    const fire = document.getElementById('tc-fire');
+    const skill = document.getElementById('tc-skill');
+    const pauseBtn = document.getElementById('tc-pause');
+    if (!joy || !knob || !fire || !skill || !pauseBtn) return;
+    let joyId = null, cx = 0, cy = 0;
+    const R = 46, DEAD = R * 0.28; // 摇杆半径与死区
+    const setDir = (dx, dy) => {
+      const len = Math.hypot(dx, dy);
+      const on = len > DEAD;
+      const nx = len ? dx / len : 0, ny = len ? dy / len : 0;
+      InputManager.setVirtual('w', on && ny < -0.45);
+      InputManager.setVirtual('s', on && ny > 0.45);
+      InputManager.setVirtual('a', on && nx < -0.45);
+      InputManager.setVirtual('d', on && nx > 0.45);
+    };
+    joy.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      joyId = e.pointerId;
+      try { joy.setPointerCapture(joyId); } catch (err) {}
+      const r = joy.getBoundingClientRect();
+      cx = r.left + r.width / 2; cy = r.top + r.height / 2;
+      TouchControls._moveKnob(knob, cx, cy, e.clientX, e.clientY, R);
+      setDir(e.clientX - cx, e.clientY - cy);
+    });
+    joy.addEventListener('pointermove', e => {
+      if (e.pointerId !== joyId) return;
+      e.preventDefault();
+      TouchControls._moveKnob(knob, cx, cy, e.clientX, e.clientY, R);
+      setDir(e.clientX - cx, e.clientY - cy);
+    });
+    const endJoy = e => {
+      if (e.pointerId !== joyId) return;
+      joyId = null;
+      knob.style.transform = 'translate(0px, 0px)';
+      ['w', 'a', 's', 'd'].forEach(k => InputManager.setVirtual(k, false));
+    };
+    joy.addEventListener('pointerup', endJoy);
+    joy.addEventListener('pointercancel', endJoy);
+
+    // 开火：按住持续射击（等效 J/F/空格）
+    fire.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      try { fire.setPointerCapture(e.pointerId); } catch (err) {}
+      fire.classList.add('press');
+      InputManager.setVirtual('j', true);
+    });
+    const endFire = () => { fire.classList.remove('press'); InputManager.setVirtual('j', false); };
+    fire.addEventListener('pointerup', endFire);
+    fire.addEventListener('pointercancel', endFire);
+
+    // 技能：点按释放（等效 Q/E；游戏内校验充能，未满自动忽略）
+    skill.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      InputManager.tapVirtual('q');
+      skill.classList.add('press');
+      setTimeout(() => skill.classList.remove('press'), 130);
+    });
+
+    // 暂停（等效 ESC/P）
+    pauseBtn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      Game.togglePause();
+    });
+
+    // 阻止长按菜单与误触
+    document.getElementById('game-container').addEventListener('contextmenu', e => e.preventDefault());
+  },
+  _moveKnob(knob, cx, cy, px, py, max) {
+    let dx = px - cx, dy = py - cy;
+    const len = Math.hypot(dx, dy);
+    if (len > max) { dx = dx / len * max; dy = dy / len * max; }
+    knob.style.transform = `translate(${dx}px, ${dy}px)`;
+  },
+  show(on) {
+    const el = document.getElementById('touch-controls');
+    if (el) el.classList.toggle('on', on && this.enabled);
   }
 };
 
@@ -1209,31 +1501,30 @@ class Boss {
 }
 
 // ============================================================
-// 地图生成（含品牌YS地形）
+// 地图生成（含钢铁洪流·五角星徽记地形）
 // ============================================================
 const BrandLayoutGenerator = {
-  ysMatrix: [
-    // Y (5x7) + 2空格 + S (5x7) = 12列 × 7行
-    // 1 = BRICK, 2 = STEEL
-    [1,0,0,0,1, 0,0, 2,1,1,1,0],
-    [1,0,0,0,1, 0,0, 1,0,0,0,0],
-    [0,1,0,1,0, 2,0, 1,0,0,0,0],
-    [0,1,0,1,0, 0,0, 0,1,1,1,0],
-    [0,0,1,0,0, 0,0, 0,0,0,0,1],
-    [0,0,1,0,0, 0,2, 0,0,0,0,1],
-    [0,0,1,0,0, 0,0, 1,1,1,1,0],
+  emblemMatrix: [
+    // 五角星（7x7）：1 = BRICK, 2 = STEEL（核心钢芯）
+    [0,0,0,1,0,0,0],
+    [0,0,0,1,0,0,0],
+    [1,1,1,2,1,1,1],
+    [0,1,1,1,1,1,0],
+    [0,0,1,1,1,0,0],
+    [0,1,1,0,1,1,0],
+    [1,1,0,0,0,1,1],
   ],
-  generateYS(map) {
+  generateEmblem(map) {
     const scale = 2; // 每格矩阵占2 tile
-    const rows = this.ysMatrix.length;
-    const cols = this.ysMatrix[0].length;
+    const rows = this.emblemMatrix.length;
+    const cols = this.emblemMatrix[0].length;
     const totalW = cols * scale;
     const totalH = rows * scale;
     const startX = Math.floor((CONFIG.MAP_W - totalW) / 2);
     const startY = Math.floor((CONFIG.MAP_H - totalH) / 2) - 1;
     for (let my = 0; my < rows; my++) {
       for (let mx = 0; mx < cols; mx++) {
-        const v = this.ysMatrix[my][mx];
+        const v = this.emblemMatrix[my][mx];
         if (v === 0) continue;
         const type = v === 2 ? TILE_TYPES.STEEL : TILE_TYPES.BRICK;
         for (let sy = 0; sy < scale; sy++) {
@@ -1254,7 +1545,7 @@ const BrandLayoutGenerator = {
 // 品牌文字图层（底图字样填充升级）
 // ============================================================
 const BrandTextLayer = {
-  text: '浪尖儿大学社区',
+  text: '钢铁洪流',
   fillRatio: 0,
   stageLevel: 1,
   offscreen: null,
@@ -1272,7 +1563,7 @@ const BrandTextLayer = {
     const ctx = this.offCtx;
     ctx.clearRect(0, 0, this.offscreen.width, this.offscreen.height);
     ctx.save();
-    ctx.font = 'bold 110px "Microsoft YaHei", "PingFang SC", sans-serif';
+    ctx.font = 'bold 120px "Microsoft YaHei", "PingFang SC", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.lineJoin = 'round';
@@ -1297,7 +1588,7 @@ const BrandTextLayer = {
     const ctx = this.offCtx;
     ctx.clearRect(0, 0, this.offscreen.width, this.offscreen.height);
     ctx.save();
-    ctx.font = 'bold 110px "Microsoft YaHei", sans-serif';
+    ctx.font = 'bold 120px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const cx = CONFIG.CANVAS_W/2, cy = CONFIG.CANVAS_H/2;
@@ -1318,7 +1609,7 @@ const BrandTextLayer = {
     const cx = CONFIG.CANVAS_W/2, cy = CONFIG.CANVAS_H/2;
     const txt = this.text;
     ctx.save();
-    ctx.font = 'bold 110px "Microsoft YaHei", sans-serif';
+    ctx.font = 'bold 120px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.lineJoin = 'round';
@@ -1388,8 +1679,8 @@ function generateMap() {
   for (let x = 0; x < CONFIG.MAP_W; x++) { map[0][x] = TILE_TYPES.STEEL; map[CONFIG.MAP_H-1][x] = TILE_TYPES.STEEL; }
   for (let y = 0; y < CONFIG.MAP_H; y++) { map[y][0] = TILE_TYPES.STEEL; map[y][CONFIG.MAP_W-1] = TILE_TYPES.STEEL; }
 
-  // 品牌YS字样（先放，避免被覆盖）
-  BrandLayoutGenerator.generateYS(map);
+  // 钢铁洪流五角星徽记（先放，避免被覆盖）
+  BrandLayoutGenerator.generateEmblem(map);
 
   // 随机散布砖墙、草丛、水面
   for (let y = 2; y < CONFIG.MAP_H-2; y++) {
@@ -2010,6 +2301,7 @@ const Game = {
     this.ctx = this.canvas.getContext('2d');
     this.ctx.imageSmoothingEnabled = false;
     InputManager.init();
+    TouchControls.init();
     this.particles = new ParticleSystem();
     this.cameraShake = new CameraShake();
     AchievementTracker.freshInit();
@@ -2100,7 +2392,7 @@ const Game = {
       mctx.fillStyle = '#111';
       mctx.fillRect(38, hy+32, 14, 2);
       mctx.fillRect(38, hy+32, 2, 2); mctx.fillRect(50, hy+32, 2, 2);
-      // 浪尖儿校徽
+      // 金色徽章
       mctx.fillStyle = '#ffdd44';
       mctx.fillRect(41, hy+42, 8, 2);
       mctx.fillStyle = '#ff8844';
@@ -2323,11 +2615,13 @@ const Game = {
   backToMenu() {
     this.running = false;
     this.paused = false;
+    TouchControls.show(false);
     document.getElementById('tank-select').classList.remove('active');
     document.getElementById('result-overlay').classList.remove('active');
     document.getElementById('pause-overlay').style.display = 'none';
     document.getElementById('menu-overlay').classList.remove('hidden');
     TutorialGuide.end();
+    this._menuLoop(); // 重启菜单背景渲染（游戏中已停止）
   },
   confirmTank() {
     // 【双人模式p1】确认P1选择 → 切到P2阶段，重绘卡片
@@ -2518,39 +2812,124 @@ const Game = {
     // 隐藏暂停面板
     document.getElementById('pause-overlay').style.display = 'none';
     this.lastTs = performance.now();
+    TouchControls.show(true);
+    this._showModeTip();
     if (runTutorial) TutorialGuide.start(this.mode);
     requestAnimationFrame((ts) => this._loop(ts));
   },
 
+  // 每次进入模式的温馨提示
+  _showModeTip() {
+    const el = document.getElementById('mode-tip');
+    if (!el) return;
+    el.textContent = '💡 温馨提示：如遇问题，请退出至主页面重新进入'
+      + (this.mode !== 'single' ? '（移动端触控仅操控 P1）' : '');
+    el.classList.remove('show');
+    void el.offsetWidth; // 强制重排以重启动画
+    el.classList.add('show');
+  },
+
   _menuLoop() {
-    // 主菜单背景也做点动画
+    // 主菜单背景：静态底图（随机砖块地形 + 钢铁洪流星徽）缓存一次，每帧只叠加动态元素
     const ctx = this.ctx;
     const W = CONFIG.CANVAS_W, H = CONFIG.CANVAS_H;
+    if (!this._menuBg) this._buildMenuBackground();
     const draw = () => {
       if (this.running) return; // 进入游戏后停
-      // 背景网格
-      ctx.fillStyle = '#0c0c1c';
-      ctx.fillRect(0, 0, W, H);
-      // 背景品牌字样
+      // 静态底图（网格/随机地形/星徽/暗角）
+      ctx.drawImage(this._menuBg, 0, 0);
+      // 中央"钢铁洪流"水印
       BrandTextLayer.render(ctx, false);
-      // 网格线
-      ctx.strokeStyle = 'rgba(60,90,150,0.12)';
-      ctx.lineWidth = 1;
-      for (let x = 0; x < W; x += CONFIG.TILE) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-      for (let y = 0; y < H; y += CONFIG.TILE) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
-      // 漂浮像素粒子
+      // 漂浮火花粒子（蓝钢 + 橙色焊花）
       const t = Date.now()*0.0005;
-      ctx.fillStyle = '#5588ff';
       for (let i = 0; i < 30; i++) {
         const x = ((i*97 + t*500) % W);
         const y = ((i*53 + Math.sin(t+i)*40) % H + H) % H;
-        ctx.globalAlpha = 0.3 + Math.sin(t*2+i)*0.2;
+        ctx.fillStyle = i % 3 === 0 ? '#ffaa44' : '#5588ff';
+        ctx.globalAlpha = 0.22 + Math.sin(t*2+i)*0.18;
         ctx.fillRect(Math.floor(x), Math.floor(y), 2, 2);
       }
       ctx.globalAlpha = 1;
       requestAnimationFrame(draw);
     };
     draw();
+  },
+
+  // 生成菜单静态底图：随机砖块地形 + 五角星徽记（每次刷新随机）
+  _buildMenuBackground() {
+    const W = CONFIG.CANVAS_W, H = CONFIG.CANVAS_H, T = CONFIG.TILE;
+    const cols = W / T, rows = H / T;
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    const rand = (a, b) => a + Math.random() * (b - a);
+    // 五角星绘制
+    const star = (cx, cy, r, rot, stroke, fill, lw) => {
+      g.save();
+      g.translate(cx, cy);
+      g.rotate(rot);
+      g.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const a = -Math.PI / 2 + i * 2 * Math.PI / 5;
+        const b = a + Math.PI / 5;
+        g.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        g.lineTo(Math.cos(b) * r * 0.45, Math.sin(b) * r * 0.45);
+      }
+      g.closePath();
+      if (fill) { g.fillStyle = fill; g.fill(); }
+      if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw || 2; g.stroke(); }
+      g.restore();
+    };
+    // 深钢底色
+    g.fillStyle = '#0c101c';
+    g.fillRect(0, 0, W, H);
+    // 网格
+    g.strokeStyle = 'rgba(60,90,150,0.10)';
+    g.lineWidth = 1;
+    for (let x = 0; x <= W; x += T) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); }
+    for (let y = 0; y <= H; y += T) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+    // 随机砖块/钢块地形（中央留白衬托水印）
+    const inCenter = (cx, cy) => cx > 4 && cx < 19 && cy > 4 && cy < 14;
+    const occupied = new Set();
+    const clusters = 12 + Math.floor(Math.random() * 6);
+    for (let i = 0; i < clusters; i++) {
+      let tx = 0, ty = 0, ok = false;
+      for (let tries = 0; tries < 20; tries++) {
+        tx = Math.floor(rand(1, cols - 1));
+        ty = Math.floor(rand(1, rows - 1));
+        if (!inCenter(tx, ty) && !occupied.has(tx + ',' + ty)) { ok = true; break; }
+      }
+      if (!ok) continue;
+      let x = tx, y = ty;
+      const len = Math.floor(rand(2, 7));
+      for (let j = 0; j < len; j++) {
+        if (x < 1 || y < 1 || x > cols - 2 || y > rows - 2 || inCenter(x, y)) break;
+        const key = x + ',' + y;
+        if (!occupied.has(key)) {
+          occupied.add(key);
+          renderTile(g, Math.random() < 0.18 ? TILE_TYPES.STEEL : TILE_TYPES.BRICK, x, y, 2);
+        }
+        if (Math.random() < 0.5) x += Math.random() < 0.5 ? 1 : -1;
+        else y += Math.random() < 0.5 ? 1 : -1;
+      }
+    }
+    // 压暗地形，退为背景
+    g.fillStyle = 'rgba(8,12,24,0.62)';
+    g.fillRect(0, 0, W, H);
+    // 钢铁洪流星徽：中央大星衬托水印 + 四角小星
+    star(W / 2, H / 2, 250, 0, 'rgba(111,181,255,0.16)', 'rgba(80,130,255,0.05)', 3);
+    star(W / 2, H / 2, 180, 0, 'rgba(111,181,255,0.10)', null, 2);
+    star(90, 100, 26, rand(-0.4, 0.4), 'rgba(255,214,10,0.28)', 'rgba(255,214,10,0.10)', 2);
+    star(W - 110, 140, 20, rand(-0.4, 0.4), 'rgba(255,214,10,0.22)', null, 2);
+    star(150, H - 130, 18, rand(-0.4, 0.4), 'rgba(255,160,60,0.22)', null, 2);
+    star(W - 80, H - 100, 24, rand(-0.4, 0.4), 'rgba(255,214,10,0.25)', 'rgba(255,160,60,0.08)', 2);
+    // 暗角聚焦
+    const vg = g.createRadialGradient(W/2, H/2, H*0.35, W/2, H/2, H*0.78);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(1, 'rgba(0,0,0,0.5)');
+    g.fillStyle = vg;
+    g.fillRect(0, 0, W, H);
+    this._menuBg = c;
   },
 
   // ---- 主循环 ----
@@ -2841,6 +3220,7 @@ const Game = {
 
   _endGame(victory, titleText) {
     this.running = false;
+    TouchControls.show(false);
     this.result = { victory, titleText };
     const ov = document.getElementById('result-overlay');
     const rt = document.getElementById('resultTitle');
