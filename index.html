@@ -302,7 +302,7 @@
   }
   #touch-controls.on { display: block; }
   #tc-joy {
-    position: absolute; left: 22px; bottom: 30px;
+    position: absolute; left: calc(22px + env(safe-area-inset-left)); bottom: calc(30px + env(safe-area-inset-bottom));
     width: 132px; height: 132px; border-radius: 50%;
     background: rgba(18,26,48,0.55);
     border: 2px solid rgba(110,160,255,0.45);
@@ -329,15 +329,15 @@
     -webkit-tap-highlight-color: transparent;
   }
   .tc-btn.press { transform: scale(0.92); filter: brightness(1.5); }
-  #tc-fire { right: 24px; bottom: 30px; width: 86px; height: 86px; }
+  #tc-fire { right: calc(24px + env(safe-area-inset-right)); bottom: calc(30px + env(safe-area-inset-bottom)); width: 86px; height: 86px; }
   #tc-skill {
-    right: 36px; bottom: 138px; width: 64px; height: 64px;
+    right: calc(36px + env(safe-area-inset-right)); bottom: calc(138px + env(safe-area-inset-bottom)); width: 64px; height: 64px;
     font-size: 22px; color: #bfe8ff;
     border-color: rgba(120,220,255,0.55);
     box-shadow: 0 0 14px rgba(80,200,255,0.3), inset 0 0 16px rgba(0,0,0,0.4);
   }
   #tc-pause {
-    position: absolute; top: 12px; right: 12px;
+    position: absolute; top: calc(12px + env(safe-area-inset-top)); right: calc(12px + env(safe-area-inset-right));
     width: 42px; height: 42px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 8px; font-size: 16px; color: #9fc0ff;
@@ -370,15 +370,29 @@
   @media (pointer: coarse) {
     body { overscroll-behavior: none; }
   }
+  /* 触屏窄屏：教程弹窗抬高，避开底部虚拟摇杆/按键 */
+  @media (pointer: coarse) and (max-width: 700px) {
+    #tutorial-dialog { bottom: 178px !important; }
+  }
   @media (max-width: 700px) {
     .game-title { font-size: 34px; letter-spacing: 3px; }
     .game-subtitle { font-size: 11px; letter-spacing: 4px; margin-bottom: 6px; }
     .menu-thanks { margin-bottom: 18px; }
     .menu-btn { width: min(78vw, 280px); padding: 13px 18px; font-size: 12px; margin: 6px; }
-    #menu-overlay { padding: 24px 0 44px; overflow-y: auto; }
+    /* 内容超高时改为顶端对齐，避免 flex 居中裁掉顶部且无法滚动 */
+    #menu-overlay, #tank-select { justify-content: flex-start; }
+    #menu-overlay { padding: 5vh 0 44px; overflow-y: auto; }
+    #tank-select { overflow-y: auto; padding: 20px 0; touch-action: pan-y; }
+    /* 教程弹窗：窄屏收紧、吉祥物缩小、按钮加大触控区 */
+    #tutorial-dialog { padding: 12px !important; gap: 10px !important; }
+    #tutorial-dialog .tut-title { font-size: 12px !important; }
+    #tutorial-dialog .tut-text { font-size: 11px !important; margin-bottom: 8px !important; }
+    #tutorial-dialog .tut-next { padding: 10px 22px !important; font-size: 12px !important; }
+    #tutorial-dialog .tut-skip { padding: 8px 12px !important; }
+    #tutorial-dialog > div:first-child { width: 56px !important; height: 56px !important; }
+    #mascot-canvas { width: 56px !important; height: 56px !important; }
     .tank-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
     .tank-card { width: min(42vw, 180px); padding: 14px 10px; }
-    #tank-select { overflow-y: auto; padding: 20px 0; touch-action: pan-y; }
     .select-title { font-size: 18px; margin-bottom: 20px; }
     .result-title { font-size: 32px; }
     .result-stats { padding: 16px 22px; font-size: 12px; }
@@ -697,10 +711,10 @@ const CONFIG = {
   get CANVAS_H() { return this.MAP_H * this.TILE; }, // 720
   BOSS_THRESHOLD: 8000,
   STAGES: [
-    { id: 1, scoreMin: 0, scoreMax: 1000, spawnRate: 3.0, enemyPool: ['basic'], bgm: 'calm' },
-    { id: 2, scoreMin: 1000, scoreMax: 3000, spawnRate: 2.2, enemyPool: ['basic','fast'], bgm: 'rising' },
-    { id: 3, scoreMin: 3000, scoreMax: 6000, spawnRate: 1.5, enemyPool: ['basic','fast','heavy'], bgm: 'tense' },
-    { id: 4, scoreMin: 6000, scoreMax: 999999, spawnRate: 1.0, enemyPool: ['fast','heavy','elite'], bgm: 'tense' },
+    { id: 1, scoreMin: 0, scoreMax: 1000, spawnRate: 4.2, enemyPool: ['basic'], bgm: 'calm' },
+    { id: 2, scoreMin: 1000, scoreMax: 3000, spawnRate: 3.2, enemyPool: ['basic','fast'], bgm: 'rising' },
+    { id: 3, scoreMin: 3000, scoreMax: 6000, spawnRate: 2.2, enemyPool: ['basic','fast','heavy'], bgm: 'tense' },
+    { id: 4, scoreMin: 6000, scoreMax: 999999, spawnRate: 1.6, enemyPool: ['fast','heavy','elite'], bgm: 'tense' },
   ]
 };
 
@@ -734,9 +748,9 @@ const TANK_TYPES = {
 };
 
 const ENEMY_TYPES = {
-  // 略低于对应定位玩家：~70%血量 / ~80%速度 / ~75%伤害 / 射速更低
-  basic: { hp: 70, speed: 120, fireRate: 1.3, damage: 11, score: 50, color: '#aa3333', trackColor: '#551111', bulletSpeed: 340, skillChargeBase: 25 },
-  fast: { hp: 55, speed: 140, fireRate: 0.9, damage: 9, score: 80, color: '#33cc88', trackColor: '#116644', bulletSpeed: 400, skillChargeBase: 30 },
+  // 低于对应定位玩家：前期兵种已削弱（降血量/伤害/射速），后期兵种保持挑战性
+  basic: { hp: 60, speed: 120, fireRate: 1.5, damage: 9, score: 50, color: '#aa3333', trackColor: '#551111', bulletSpeed: 340, skillChargeBase: 25 },
+  fast: { hp: 50, speed: 140, fireRate: 1.0, damage: 8, score: 80, color: '#33cc88', trackColor: '#116644', bulletSpeed: 400, skillChargeBase: 30 },
   heavy: { hp: 170, speed: 60, fireRate: 1.8, damage: 22, score: 120, color: '#cc8833', trackColor: '#664411', bulletSpeed: 300, skillChargeBase: 20 },
   elite: { hp: 180, speed: 115, fireRate: 1.0, damage: 18, score: 200, color: '#dd44dd', trackColor: '#772277', bulletSpeed: 420, skillChargeBase: 18 }
 };
@@ -1501,47 +1515,6 @@ class Boss {
 }
 
 // ============================================================
-// 地图生成（含钢铁洪流·五角星徽记地形）
-// ============================================================
-const BrandLayoutGenerator = {
-  emblemMatrix: [
-    // 五角星（7x7）：1 = BRICK, 2 = STEEL（核心钢芯）
-    [0,0,0,1,0,0,0],
-    [0,0,0,1,0,0,0],
-    [1,1,1,2,1,1,1],
-    [0,1,1,1,1,1,0],
-    [0,0,1,1,1,0,0],
-    [0,1,1,0,1,1,0],
-    [1,1,0,0,0,1,1],
-  ],
-  generateEmblem(map) {
-    const scale = 2; // 每格矩阵占2 tile
-    const rows = this.emblemMatrix.length;
-    const cols = this.emblemMatrix[0].length;
-    const totalW = cols * scale;
-    const totalH = rows * scale;
-    const startX = Math.floor((CONFIG.MAP_W - totalW) / 2);
-    const startY = Math.floor((CONFIG.MAP_H - totalH) / 2) - 1;
-    for (let my = 0; my < rows; my++) {
-      for (let mx = 0; mx < cols; mx++) {
-        const v = this.emblemMatrix[my][mx];
-        if (v === 0) continue;
-        const type = v === 2 ? TILE_TYPES.STEEL : TILE_TYPES.BRICK;
-        for (let sy = 0; sy < scale; sy++) {
-          for (let sx = 0; sx < scale; sx++) {
-            const tx = startX + mx*scale + sx;
-            const ty = startY + my*scale + sy;
-            if (tx>=0&&ty>=0&&tx<CONFIG.MAP_W&&ty<CONFIG.MAP_H) {
-              map[ty][tx] = type;
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-// ============================================================
 // 品牌文字图层（底图字样填充升级）
 // ============================================================
 const BrandTextLayer = {
@@ -1667,7 +1640,7 @@ const BrandTextLayer = {
 };
 
 // ============================================================
-// 生成关卡地图
+// 生成关卡地图（地形完全随机，每局不同）
 // ============================================================
 function generateMap() {
   const map = [];
@@ -1679,26 +1652,41 @@ function generateMap() {
   for (let x = 0; x < CONFIG.MAP_W; x++) { map[0][x] = TILE_TYPES.STEEL; map[CONFIG.MAP_H-1][x] = TILE_TYPES.STEEL; }
   for (let y = 0; y < CONFIG.MAP_H; y++) { map[y][0] = TILE_TYPES.STEEL; map[y][CONFIG.MAP_W-1] = TILE_TYPES.STEEL; }
 
-  // 钢铁洪流五角星徽记（先放，避免被覆盖）
-  BrandLayoutGenerator.generateEmblem(map);
-
-  // 随机散布砖墙、草丛、水面
+  // —— 随机地形（每局不同）：随机砖墙集群 + 散布钢块/水面/草丛 ——
+  const inProtectedZone = (x, y) =>
+    (x <= 4 && y >= CONFIG.MAP_H-5) || (x >= CONFIG.MAP_W-5 && y >= CONFIG.MAP_H-5) || // 玩家出生区
+    (y <= 4 && x >= 6 && x <= CONFIG.MAP_W-7) || // Boss出场区顶部
+    (y <= 2 && (x <= 2 || (x >= 11 && x <= 13) || x >= 21)); // 敌人出生区（左右上角+顶部中央）
+  const setTile = (x, y, t) => {
+    if (x < 2 || y < 2 || x > CONFIG.MAP_W-3 || y > CONFIG.MAP_H-3) return;
+    if (inProtectedZone(x, y)) return;
+    if (map[y][x] === TILE_TYPES.EMPTY) map[y][x] = t;
+  };
+  // 随机砖墙集群（横/纵短墙，偶尔拐角）
+  const wallCount = 8 + Math.floor(Math.random() * 6);
+  for (let i = 0; i < wallCount; i++) {
+    const horiz = Math.random() < 0.5;
+    const len = 2 + Math.floor(Math.random() * 5);
+    let x = 2 + Math.floor(Math.random() * (CONFIG.MAP_W - 4));
+    let y = 2 + Math.floor(Math.random() * (CONFIG.MAP_H - 4));
+    for (let j = 0; j < len; j++) {
+      setTile(x, y, TILE_TYPES.BRICK);
+      if (Math.random() < 0.18) setTile(x + (horiz ? 0 : 1), y + (horiz ? 1 : 0), TILE_TYPES.BRICK);
+      horiz ? x++ : y++;
+    }
+  }
+  // 散布钢块/水面/草丛（低密度点缀）
   for (let y = 2; y < CONFIG.MAP_H-2; y++) {
     for (let x = 2; x < CONFIG.MAP_W-2; x++) {
-      if (map[y][x] !== TILE_TYPES.EMPTY) continue;
+      if (map[y][x] !== TILE_TYPES.EMPTY || inProtectedZone(x, y)) continue;
       const r = Math.random();
-      // 保护玩家出生区域
-      if ((x <= 4 && y >= CONFIG.MAP_H-5) || (x >= CONFIG.MAP_W-5 && y >= CONFIG.MAP_H-5)) continue;
-      // 保护Boss出场区域顶部
-      if (y <= 4 && x >= 6 && x <= CONFIG.MAP_W-7) continue;
-      if (r < 0.14) map[y][x] = TILE_TYPES.BRICK;
-      else if (r < 0.17) map[y][x] = TILE_TYPES.STEEL;
-      else if (r < 0.195) map[y][x] = TILE_TYPES.WATER;
-      else if (r < 0.22) map[y][x] = TILE_TYPES.BUSH;
+      if (r < 0.045) map[y][x] = TILE_TYPES.STEEL;
+      else if (r < 0.075) map[y][x] = TILE_TYPES.WATER;
+      else if (r < 0.115) map[y][x] = TILE_TYPES.BUSH;
     }
   }
 
-  // 【出生区域清理】：底部3行大范围清除障碍（保证单人/双人/PVP各模式出生点均无阻挡）
+  // 【出生区域清理·与玩家相同原则】：底部3行大范围清除障碍（保证单人/双人/PVP各模式出生点均无阻挡）
   for (let y = CONFIG.MAP_H - 4; y <= CONFIG.MAP_H - 2; y++) {
     for (let x = 2; x <= CONFIG.MAP_W - 3; x++) {
       const t = map[y][x];
@@ -1711,6 +1699,17 @@ function generateMap() {
         if (t === TILE_TYPES.STEEL && y > 0 && y < CONFIG.MAP_H-1 && x > 0 && x < CONFIG.MAP_W-1) {
           map[y][x] = TILE_TYPES.EMPTY;
         }
+      }
+    }
+  }
+
+  // 【敌人出生区清理】：顶部三个刷新点区域清障（与玩家出生原则相同，保证敌人不被地形卡死）
+  const enemySpawnCols = [[1, 2], [11, 13], [21, 22]];
+  for (let y = 1; y <= 2; y++) {
+    for (const [c0, c1] of enemySpawnCols) {
+      for (let x = c0; x <= c1; x++) {
+        if (x <= 0 || x >= CONFIG.MAP_W-1) continue;
+        map[y][x] = TILE_TYPES.EMPTY;
       }
     }
   }
@@ -2164,8 +2163,8 @@ const TutorialGuide = {
     { title: '欢迎！', text: '指挥官你好！我是鱿鱼向导小墨～\n欢迎来到《钢铁洪流》坦克大战！', trigger: 'click', highlight: null },
     { title: '操作方式', text: '【玩家1键位】\n移动：W A S D 键\n开火：J 键 / 空格键 / F\n技能：Q 键 或 E 键\n（方向键也可用于移动）', trigger: 'move', highlight: 'player' },
     { title: '地形说明', text: '🟫 砖墙可被摧毁\n⬜ 钢墙坚不可摧\n🟦 水面无法通过\n🌲 草丛可以藏身', trigger: 'click', highlight: 'map' },
-    { title: '原创标识', text: '注意看地图中央！\n"YS" 字样是制作者的原创标识\n同时也是战场中央的天然战术掩体', trigger: 'click', highlight: 'ys' },
-    { title: '底图字样', text: '击败敌人获得积分\n可以点亮底图的社区名称\n战斗越激烈，字样效果越炫酷！', trigger: 'click', highlight: 'brand' },
+    { title: '随机地形', text: '注意看战场环境！\n砖墙集群、水域、草丛每局随机生成\n每次开战都是全新战场\n砖墙可破坏，打出属于你的路线！', trigger: 'click', highlight: 'ys' },
+    { title: '底图字样', text: '击败敌人获得积分\n可以点亮底图的「钢铁洪流」字样\n战斗越激烈，字样效果越炫酷！', trigger: 'click', highlight: 'brand' },
     { title: '暂停·成就存档', text: '【重要提醒】\n每次打开网页会重置当前解锁成就！\n\n按 ESC 或 P 键打开暂停面板\n→ 点击「💾 保存成就达成时间」按钮\n→ 你已解锁的成就会记录真实时间\n→ 关闭页面后重开，永久成就仍在展馆！\n（建议达到里程碑后立刻保存！）', trigger: 'click', highlight: null },
     { title: '准备开战', text: '击毁敌车赚取积分，积分达到8000时Boss登场！\n指挥官，战斗开始！\n\n—— 新人制作，产品简陋请见谅！——', trigger: 'click', highlight: null }
   ],
@@ -2175,7 +2174,7 @@ const TutorialGuide = {
     { title: '【P1】玩家1键位', text: '【蓝方·玩家1】\n移动：W A S D\n开火：J 键 / F 键（双人模式方向键仅P2可用）\n技能：Q 键 或 E 键\n（左手操作，建议坐在左侧）', trigger: 'click', highlight: 'p1' },
     { title: '【P2】玩家2键位', text: '【红方·玩家2】\n移动：↑ ↓ ← → 方向键\n开火：Enter / 右Ctrl / ? / 键\n技能：\\ 反斜杠 或 Shift 键\n（右手操作，建议坐在右侧）\n\n⚠ 注意：双人模式下方向键只控制P2！', trigger: 'click', highlight: 'p2' },
     { title: '协作法则', text: '【共同目标】\n• 积分共享，击杀敌人双方都能充能\n• 一人倒下另一人可继续战斗，存活=胜利\n• 技能Q / \\ 互补，突击+重装推图最稳\n• 达到8000分，协力挑战BOSS！', trigger: 'click', highlight: null },
-    { title: '原创标识', text: '地图中央"YS"字样是制作者原创标识\n同时也是你们共同的战略掩体\n善用地形，打出钢铁同盟的默契！', trigger: 'click', highlight: 'ys' },
+    { title: '随机地形', text: '战场掩体每局随机生成\n每局开战前先观察地形分布\n善用地形，打出钢铁同盟的默契！', trigger: 'click', highlight: 'ys' },
     { title: '暂停·成就存档', text: '【重要提醒】\n每次打开网页会重置当前解锁成就！\n\n由任意一方按 ESC 或 P 键打开暂停面板\n→ 点击「💾 保存成就达成时间」按钮\n→ 两人共同的战绩会永久存档！\n（击败Boss前后记得保存～）', trigger: 'click', highlight: null },
     { title: '准备并肩作战！', text: '胜负不再是一个人的事\n保护好你的战友，把后背交给彼此！\n指挥官们，战斗开始！\n\n—— 新人制作，产品简陋请见谅！——', trigger: 'click', highlight: null }
   ],
@@ -2185,7 +2184,7 @@ const TutorialGuide = {
     { title: '【P1】蓝方键位', text: '【蓝方·玩家1】\n移动：W A S D\n开火：J 键 / F 键（双人模式方向键仅P2可用）\n技能：Q 键 或 E 键\n（左手操作，出生在左下方）', trigger: 'click', highlight: 'p1' },
     { title: '【P2】红方键位', text: '【红方·玩家2】\n移动：↑ ↓ ← → 方向键\n开火：Enter / 右Ctrl / ? / 键\n技能：\\ 反斜杠 或 Shift 键\n（右手操作，出生在右下方）\n\n⚠ 注意：双人模式下方向键只控制P2！', trigger: 'click', highlight: 'p2' },
     { title: '决斗规则', text: '【胜利条件】\n• 先击落对方 3 次者直接获胜\n• 击落=击杀+1，被击落=死亡+1\n• 期间会刷出AI敌人干扰，它们同样有威胁\n• 队友伤害已开启，子弹不会手下留情！', trigger: 'click', highlight: null },
-    { title: '地形+战术提示', text: '• 砖墙可被打破，开辟奇袭路线\n• 钢墙是永久掩体，架炮互射的好地方\n• 草丛可藏身，适合特工型坦克偷袭\n• 中央YS掩体是必争之战略要地！', trigger: 'click', highlight: 'ys' },
+    { title: '地形+战术提示', text: '• 砖墙可被打破，开辟奇袭路线\n• 钢墙是永久掩体，架炮互射的好地方\n• 草丛可藏身，适合特工型坦克偷袭\n• 地形每局随机，开战先观察战场！', trigger: 'click', highlight: 'ys' },
     { title: '暂停·成就存档', text: '【重要提醒】\n每次打开网页会重置当前解锁成就！\n\n决斗到精彩处可按 ESC 或 P 键暂停\n→ 点击「💾 保存成就达成时间」按钮\n→ 胜负战绩与里程碑成就永久存档！\n（打完别忘了保存胜利者的战绩！）', trigger: 'click', highlight: null },
     { title: '决斗开始！', text: '点到为止，祝你们打得尽兴！\n胜不骄败不馁，友谊第一比赛第二～\n倒计时结束后，立即开火！\n\n—— 新人制作，产品简陋请见谅！——', trigger: 'click', highlight: null }
   ],
@@ -2318,7 +2317,7 @@ const Game = {
 
   _addTutorialHTML() {
     const html = `
-    <div id="tutorial-dialog" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:640px;
+    <div id="tutorial-dialog" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:min(94vw,640px);
       background:rgba(12,18,36,0.92);border:3px solid #4a8aff;box-shadow:0 0 30px rgba(80,150,255,0.5);
       display:none;z-index:150;padding:16px;flex-direction:row;gap:16px;">
       <div style="width:90px;height:90px;flex-shrink:0;position:relative;">
@@ -3124,14 +3123,35 @@ const Game = {
   },
 
   _spawnEnemy() {
+    const T = CONFIG.TILE;
     const spawnPoints = [
-      { x: CONFIG.TILE*1.5, y: CONFIG.TILE*1.5 },
-      { x: CONFIG.CANVAS_W - CONFIG.TILE*1.5, y: CONFIG.TILE*1.5 },
-      { x: CONFIG.CANVAS_W/2, y: CONFIG.TILE*1.5 },
+      { x: T*1.5, y: T*1.5 },
+      { x: CONFIG.CANVAS_W - T*1.5, y: T*1.5 },
+      { x: CONFIG.CANVAS_W/2, y: T*1.5 },
     ];
     const pool = this.stage.enemyPool;
     const type = pool[Math.floor(Math.random() * pool.length)];
-    const sp = spawnPoints[Math.floor(Math.random() * spawnPoints.length)];
+    let sp = spawnPoints[Math.floor(Math.random() * spawnPoints.length)];
+    // 出生占用检查（与玩家出生原则一致：保证出生区域无障碍、不与他车重叠）
+    const isOccupied = (x, y) => {
+      for (const o of [...this.enemies, ...this.players]) {
+        if (!o.dead && Math.hypot(o.x - x, o.y - y) < T) return true;
+      }
+      return false;
+    };
+    if (isOccupied(sp.x, sp.y)) {
+      // 在三个刷新点附近找空位（清障区内 y 限制在前两行）
+      const cands = [];
+      for (const p0 of spawnPoints) {
+        for (let dy = 0; dy <= 1; dy++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            const x = p0.x + dx * T, y = p0.y + dy * T;
+            if (x > T && x < CONFIG.CANVAS_W - T && !isOccupied(x, y)) cands.push({ x, y });
+          }
+        }
+      }
+      if (cands.length) sp = cands[Math.floor(Math.random() * cands.length)];
+    }
     const e = new EnemyTank(sp.x, sp.y, type);
     // 生成特效
     Game.particles.sparks(sp.x, sp.y, '#ff44ff');
