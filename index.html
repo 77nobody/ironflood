@@ -346,6 +346,113 @@
     pointer-events: auto; touch-action: none;
     -webkit-tap-highlight-color: transparent;
   }
+  /* —— P2 操作区（双人模式，红色系区分；默认隐藏） —— */
+  #tc-joy2, #tc-fire2, #tc-skill2 { display: none; }
+  #tc-joy2 {
+    position: absolute; right: calc(22px + env(safe-area-inset-right)); bottom: calc(30px + env(safe-area-inset-bottom));
+    width: 132px; height: 132px; border-radius: 50%;
+    background: rgba(48,18,18,0.55);
+    border: 2px solid rgba(255,120,110,0.5);
+    box-shadow: 0 0 18px rgba(200,60,60,0.25), inset 0 0 24px rgba(0,0,0,0.45);
+    pointer-events: auto; touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #tc-knob2 {
+    position: absolute; left: 50%; top: 50%;
+    width: 58px; height: 58px; margin: -29px 0 0 -29px;
+    border-radius: 50%;
+    background: rgba(230,110,90,0.55);
+    border: 2px solid rgba(255,180,160,0.8);
+    box-shadow: 0 0 12px rgba(255,120,90,0.5);
+  }
+  #tc-fire2 {
+    right: calc(24px + env(safe-area-inset-right)); bottom: calc(30px + env(safe-area-inset-bottom));
+    width: 86px; height: 86px;
+    border-color: rgba(255,110,90,0.6);
+    box-shadow: 0 0 14px rgba(255,90,60,0.3), inset 0 0 16px rgba(0,0,0,0.4);
+  }
+  #tc-skill2 {
+    right: calc(36px + env(safe-area-inset-right)); bottom: calc(138px + env(safe-area-inset-bottom));
+    width: 64px; height: 64px; font-size: 22px; color: #ffd9c9;
+    border-color: rgba(255,160,120,0.6);
+    box-shadow: 0 0 14px rgba(255,140,80,0.3), inset 0 0 16px rgba(0,0,0,0.4);
+  }
+  /* —— 双人模式紧凑布局：P1 左手区，P2 右手区（横屏） —— */
+  #touch-controls.dual #tc-joy {
+    left: calc(16px + env(safe-area-inset-left)); bottom: calc(18px + env(safe-area-inset-bottom));
+    width: 110px; height: 110px;
+  }
+  #touch-controls.dual #tc-knob { width: 50px; height: 50px; margin: -25px 0 0 -25px; }
+  #touch-controls.dual #tc-fire {
+    left: calc(134px + env(safe-area-inset-left)); right: auto; bottom: calc(20px + env(safe-area-inset-bottom));
+    width: 62px; height: 62px; font-size: 20px;
+  }
+  #touch-controls.dual #tc-skill {
+    left: calc(142px + env(safe-area-inset-left)); right: auto; bottom: calc(94px + env(safe-area-inset-bottom));
+    width: 46px; height: 46px; font-size: 16px;
+  }
+  #touch-controls.dual #tc-joy2 {
+    display: block;
+    right: calc(16px + env(safe-area-inset-right)); bottom: calc(18px + env(safe-area-inset-bottom));
+    width: 110px; height: 110px;
+  }
+  #touch-controls.dual #tc-knob2 { width: 50px; height: 50px; margin: -25px 0 0 -25px; }
+  #touch-controls.dual #tc-fire2 {
+    display: flex;
+    right: calc(134px + env(safe-area-inset-right)); bottom: calc(20px + env(safe-area-inset-bottom));
+    width: 62px; height: 62px; font-size: 20px;
+  }
+  #touch-controls.dual #tc-skill2 {
+    display: flex;
+    right: calc(142px + env(safe-area-inset-right)); bottom: calc(94px + env(safe-area-inset-bottom));
+    width: 46px; height: 46px; font-size: 16px;
+  }
+  /* —— 双人竖屏回退（用户选择仍要竖屏时）：收窄两侧控件，320px 最窄手机也不重叠 —— */
+  @media (orientation: portrait) {
+    #touch-controls.dual #tc-joy {
+      left: calc(8px + env(safe-area-inset-left)); bottom: calc(14px + env(safe-area-inset-bottom));
+      width: 88px; height: 88px;
+    }
+    #touch-controls.dual #tc-knob { width: 40px; height: 40px; margin: -20px 0 0 -20px; }
+    #touch-controls.dual #tc-fire {
+      left: calc(100px + env(safe-area-inset-left)); right: auto; bottom: calc(16px + env(safe-area-inset-bottom));
+      width: 50px; height: 50px; font-size: 17px;
+    }
+    #touch-controls.dual #tc-skill {
+      left: calc(106px + env(safe-area-inset-left)); right: auto; bottom: calc(76px + env(safe-area-inset-bottom));
+      width: 40px; height: 40px; font-size: 14px;
+    }
+    #touch-controls.dual #tc-joy2 {
+      right: calc(8px + env(safe-area-inset-right)); bottom: calc(14px + env(safe-area-inset-bottom));
+      width: 88px; height: 88px;
+    }
+    #touch-controls.dual #tc-knob2 { width: 40px; height: 40px; margin: -20px 0 0 -20px; }
+    #touch-controls.dual #tc-fire2 {
+      right: calc(100px + env(safe-area-inset-right)); bottom: calc(16px + env(safe-area-inset-bottom));
+      width: 50px; height: 50px; font-size: 17px;
+    }
+    #touch-controls.dual #tc-skill2 {
+      right: calc(106px + env(safe-area-inset-right)); bottom: calc(76px + env(safe-area-inset-bottom));
+      width: 40px; height: 40px; font-size: 14px;
+    }
+  }
+  /* —— 双人模式横屏提示（竖屏时显示） —— */
+  #rotate-hint {
+    position: absolute; inset: 0; z-index: 175;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; text-align: center;
+    background: rgba(5,8,18,0.9);
+    color: #bcd6ff;
+  }
+  #rotate-hint.show { display: flex; }
+  #rotate-hint .rh-icon { font-size: 54px; animation: rhSpin 2.2s ease-in-out infinite; }
+  @keyframes rhSpin {
+    0%, 20% { transform: rotate(0deg); }
+    55%, 80% { transform: rotate(90deg); }
+    100% { transform: rotate(0deg); }
+  }
+  #rotate-hint .rh-text { font-size: 13px; letter-spacing: 2px; line-height: 2; padding: 0 20px; }
+  #rotate-hint .rh-skip { font-size: 11px; color: #667799; text-decoration: underline dotted; cursor: pointer; padding: 10px; }
   /* ===== 进入模式温馨提示 ===== */
   #mode-tip {
     position: absolute; top: 64px; left: 50%;
@@ -379,6 +486,8 @@
     .game-subtitle { font-size: 11px; letter-spacing: 4px; margin-bottom: 6px; }
     .menu-thanks { margin-bottom: 18px; }
     .menu-btn { width: min(78vw, 280px); padding: 13px 18px; font-size: 12px; margin: 6px; }
+    .btn-row { gap: 10px; }
+    .btn-row .menu-btn { width: min(42vw, 220px); padding: 12px 10px; font-size: 11px; margin: 0; }
     /* 内容超高时改为顶端对齐，避免 flex 居中裁掉顶部且无法滚动 */
     #menu-overlay, #tank-select { justify-content: flex-start; }
     #menu-overlay { padding: 5vh 0 44px; overflow-y: auto; }
@@ -441,7 +550,7 @@
     </div>
     <div class="select-title" id="selectTitleText">选择你的坦克</div>
     <div class="tank-grid" id="tankGrid"></div>
-    <div style="display:flex; gap:16px;">
+    <div class="btn-row">
       <button class="menu-btn" onclick="Game.backToMenu()">返回</button>
       <button class="menu-btn orange" id="confirmTankBtn" onclick="Game.confirmTank()">开始战斗</button>
     </div>
@@ -451,7 +560,7 @@
   <div id="result-overlay">
     <div class="result-title" id="resultTitle">胜利！</div>
     <div class="result-stats" id="resultStats"></div>
-    <div style="display:flex; gap:16px;">
+    <div class="btn-row">
       <button class="menu-btn" onclick="Game.backToMenu()">返回菜单</button>
       <button class="menu-btn orange" onclick="Game.restart()">再来一局</button>
     </div>
@@ -469,12 +578,23 @@
     <div style="margin-top:28px;font-size:11px;color:#6688aa;letter-spacing:2px;">提示：按 ESC 或 P 键可随时暂停 / 保存后下次打开成就不丢失</div>
   </div>
 
-  <!-- 移动端触控（摇杆 + 开火/技能/暂停） -->
+  <!-- 移动端触控（摇杆 + 开火/技能/暂停；双人模式左右分区） -->
   <div id="touch-controls">
     <div id="tc-pause">⏸</div>
     <div id="tc-joy"><div id="tc-knob"></div></div>
     <div id="tc-skill" class="tc-btn">⚡</div>
     <div id="tc-fire" class="tc-btn">🔥</div>
+    <!-- P2 操作区（仅双人模式显示，右手区） -->
+    <div id="tc-joy2"><div id="tc-knob2"></div></div>
+    <div id="tc-skill2" class="tc-btn">⚡</div>
+    <div id="tc-fire2" class="tc-btn">💥</div>
+  </div>
+
+  <!-- 双人模式横屏提示（竖屏时显示，转到横屏自动消失） -->
+  <div id="rotate-hint">
+    <div class="rh-icon">📱</div>
+    <div class="rh-text">双人模式建议横屏游玩<br>左右两侧分别为 P1 / P2 操作区</div>
+    <div class="rh-skip" onclick="Game.dismissRotateHint()">仍要竖屏游玩 ›</div>
   </div>
 
   <!-- 进入模式温馨提示 -->
@@ -685,6 +805,74 @@ const TouchControls = {
       Game.togglePause();
     });
 
+    // —— P2 操作区（双人模式：左手区摇杆 + 开火/技能，写入方向键/Enter/反斜杠，与 P2 键盘同源） ——
+    const joy2 = document.getElementById('tc-joy2');
+    const knob2 = document.getElementById('tc-knob2');
+    const fire2 = document.getElementById('tc-fire2');
+    const skill2 = document.getElementById('tc-skill2');
+    if (joy2 && knob2 && fire2 && skill2) {
+      let joy2Id = null, c2x = 0, c2y = 0;
+      const R2 = 40, DEAD2 = R2 * 0.28;
+      const setDir2 = (dx, dy) => {
+        const len = Math.hypot(dx, dy);
+        const on = len > DEAD2;
+        const nx = len ? dx / len : 0, ny = len ? dy / len : 0;
+        InputManager.setVirtual('arrowup', on && ny < -0.45);
+        InputManager.setVirtual('arrowdown', on && ny > 0.45);
+        InputManager.setVirtual('arrowleft', on && nx < -0.45);
+        InputManager.setVirtual('arrowright', on && nx > 0.45);
+      };
+      joy2.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        joy2Id = e.pointerId;
+        try { joy2.setPointerCapture(joy2Id); } catch (err) {}
+        const r = joy2.getBoundingClientRect();
+        c2x = r.left + r.width / 2; c2y = r.top + r.height / 2;
+        TouchControls._moveKnob(knob2, c2x, c2y, e.clientX, e.clientY, R2);
+        setDir2(e.clientX - c2x, e.clientY - c2y);
+      });
+      joy2.addEventListener('pointermove', e => {
+        if (e.pointerId !== joy2Id) return;
+        e.preventDefault();
+        TouchControls._moveKnob(knob2, c2x, c2y, e.clientX, e.clientY, R2);
+        setDir2(e.clientX - c2x, e.clientY - c2y);
+      });
+      const endJoy2 = e => {
+        if (e.pointerId !== joy2Id) return;
+        joy2Id = null;
+        knob2.style.transform = 'translate(0px, 0px)';
+        ['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].forEach(k => InputManager.setVirtual(k, false));
+      };
+      joy2.addEventListener('pointerup', endJoy2);
+      joy2.addEventListener('pointercancel', endJoy2);
+
+      // P2 开火：按住持续射击（等效 Enter/Ctrl）
+      fire2.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        try { fire2.setPointerCapture(e.pointerId); } catch (err) {}
+        fire2.classList.add('press');
+        InputManager.setVirtual('enter', true);
+      });
+      const endFire2 = () => { fire2.classList.remove('press'); InputManager.setVirtual('enter', false); };
+      fire2.addEventListener('pointerup', endFire2);
+      fire2.addEventListener('pointercancel', endFire2);
+
+      // P2 技能：点按释放（等效 Shift/反斜杠）
+      skill2.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        InputManager.tapVirtual('\\');
+        skill2.classList.add('press');
+        setTimeout(() => skill2.classList.remove('press'), 130);
+      });
+    }
+
+    // 双人模式横竖屏切换：转横屏自动收起提示（不中途弹出打扰）
+    const onOrientChange = () => {
+      if (typeof Game !== 'undefined' && Game.running) Game._updateDualLayout(false);
+    };
+    window.addEventListener('resize', onOrientChange);
+    window.addEventListener('orientationchange', () => setTimeout(onOrientChange, 150));
+
     // 阻止长按菜单与误触
     document.getElementById('game-container').addEventListener('contextmenu', e => e.preventDefault());
   },
@@ -696,7 +884,14 @@ const TouchControls = {
   },
   show(on) {
     const el = document.getElementById('touch-controls');
-    if (el) el.classList.toggle('on', on && this.enabled);
+    if (el) {
+      el.classList.toggle('on', on && this.enabled);
+      if (!on) {
+        el.classList.remove('dual');
+        const hint = document.getElementById('rotate-hint');
+        if (hint) hint.classList.remove('show');
+      }
+    }
   }
 };
 
@@ -2207,6 +2402,8 @@ const TutorialGuide = {
     localStorage.setItem(key, '1');
     localStorage.setItem('tkdz_tutorialSeen', '1'); // 兼容旧字段
     document.getElementById('tutorial-dialog')?.classList.remove('active');
+    // 教程结束后再显示双人横屏提示（若仍竖屏）
+    if (typeof Game !== 'undefined' && Game.running) Game._updateDualLayout(true);
   },
   onPlayerMove() {
     if (!this.active) return;
@@ -2812,8 +3009,9 @@ const Game = {
     document.getElementById('pause-overlay').style.display = 'none';
     this.lastTs = performance.now();
     TouchControls.show(true);
-    this._showModeTip();
     if (runTutorial) TutorialGuide.start(this.mode);
+    this._updateDualLayout(true);
+    this._showModeTip();
     requestAnimationFrame((ts) => this._loop(ts));
   },
 
@@ -2822,10 +3020,32 @@ const Game = {
     const el = document.getElementById('mode-tip');
     if (!el) return;
     el.textContent = '💡 温馨提示：如遇问题，请退出至主页面重新进入'
-      + (this.mode !== 'single' ? '（移动端触控仅操控 P1）' : '');
+      + (this.mode !== 'single' ? '（移动端双人：左侧 P1 / 右侧 P2 分区触控，建议横屏游玩）' : '');
     el.classList.remove('show');
     void el.offsetWidth; // 强制重排以重启动画
     el.classList.add('show');
+  },
+
+  // —— 双人模式布局：切换触控分区（dual 类），并按需提示横屏 ——
+  _updateDualLayout(allowHint = false) {
+    const tc = document.getElementById('touch-controls');
+    if (tc) tc.classList.toggle('dual', this.running && this.mode && this.mode !== 'single');
+    const hint = document.getElementById('rotate-hint');
+    if (!hint) return;
+    const show = !!allowHint
+      && this.running && this.mode && this.mode !== 'single'
+      && TouchControls.enabled
+      && !(typeof TutorialGuide !== 'undefined' && TutorialGuide.active) // 教程期间不打扰，结束后再提示
+      && window.innerHeight > window.innerWidth
+      && !this._rotateHintDismissed;
+    hint.classList.toggle('show', show);
+  },
+
+  // 用户选择"仍要竖屏游玩"后，本次页面会话内不再提示
+  dismissRotateHint() {
+    this._rotateHintDismissed = true;
+    const hint = document.getElementById('rotate-hint');
+    if (hint) hint.classList.remove('show');
   },
 
   _menuLoop() {
