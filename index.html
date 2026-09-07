@@ -330,6 +330,12 @@
     -webkit-tap-highlight-color: transparent;
   }
   .tc-btn.press { transform: scale(0.92); filter: brightness(1.5); }
+  /* 触控按钮标签指引 */
+  .tc-label {
+    position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+    font-size: 8px; color: #88aacc; letter-spacing: 1px; white-space: nowrap;
+    pointer-events: none; opacity: 0.7; text-transform: uppercase;
+  }
   #tc-fire { right: calc(24px + env(safe-area-inset-right)); bottom: calc(30px + env(safe-area-inset-bottom)); width: 86px; height: 86px; }
   #tc-skill {
     right: calc(36px + env(safe-area-inset-right)); bottom: calc(138px + env(safe-area-inset-bottom)); width: 64px; height: 64px;
@@ -337,6 +343,15 @@
     border-color: rgba(120,220,255,0.55);
     box-shadow: 0 0 14px rgba(80,200,255,0.3), inset 0 0 16px rgba(0,0,0,0.4);
   }
+  /* 摇杆方向箭头指引 */
+  .tc-joy-arrow {
+    position: absolute; font-size: 12px; color: rgba(140,180,255,0.5);
+    pointer-events: none; line-height: 1;
+  }
+  .tc-joy-arrow.up { top: 6px; left: 50%; transform: translateX(-50%); }
+  .tc-joy-arrow.down { bottom: 6px; left: 50%; transform: translateX(-50%); }
+  .tc-joy-arrow.left { left: 6px; top: 50%; transform: translateY(-50%); }
+  .tc-joy-arrow.right { right: 6px; top: 50%; transform: translateY(-50%); }
   #tc-pause {
     position: absolute; top: calc(12px + env(safe-area-inset-top)); right: calc(12px + env(safe-area-inset-right));
     width: 42px; height: 42px;
@@ -522,6 +537,42 @@
     .result-title { font-size: 26px; margin-bottom: 14px; }
     .result-stats { margin-bottom: 16px; }
   }
+  /* —— 横屏专用适配（宽屏矮屏：主菜单 + 坦克选择） —— */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .game-title { font-size: 22px; letter-spacing: 2px; margin-bottom: 2px; }
+    .game-subtitle { font-size: 9px; letter-spacing: 3px; margin-bottom: 2px; }
+    .menu-thanks { font-size: 8px; margin-bottom: 8px; }
+    .menu-btn { width: min(46vw, 240px); padding: 7px 10px; font-size: 10px; margin: 3px; }
+    /* 主菜单改为横向两列，节省高度 */
+    #menu-overlay { padding: 2vh 0; overflow-y: auto; }
+    /* 坦克选择：4列但更紧凑 */
+    .select-title { font-size: 14px; margin-bottom: 8px; letter-spacing: 2px; }
+    .tank-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+    .tank-card { width: min(20vw, 140px); padding: 8px 6px; }
+    .tank-preview { width: 50px; height: 50px; margin-bottom: 6px; }
+    .tank-name { font-size: 10px; margin-bottom: 2px; }
+    .tank-type-label { font-size: 8px; margin-bottom: 4px; }
+    .stat-row { font-size: 7px; margin: 2px 0; }
+    .stat-bar { width: 40px; height: 5px; }
+    #tank-select { padding: 8px 0; overflow-y: auto; touch-action: pan-y; }
+    #select-step-indicator { gap: 8px; margin-bottom: 6px; }
+    .step-dot { width: 24px !important; height: 24px !important; font-size: 9px !important; }
+    .btn-row { gap: 8px; }
+    .btn-row .menu-btn { width: min(28vw, 160px); padding: 7px 8px; font-size: 9px; }
+  }
+  @media (orientation: landscape) and (max-height: 380px) {
+    .game-title { font-size: 18px; }
+    .menu-btn { padding: 5px 8px; font-size: 9px; margin: 2px; }
+    .tank-grid { gap: 4px; margin-bottom: 6px; }
+    .tank-card { padding: 5px 4px; }
+    .tank-preview { width: 40px; height: 40px; margin-bottom: 3px; }
+    .tank-name { font-size: 8px; }
+    .tank-type-label { font-size: 6px; margin-bottom: 2px; }
+    .stat-row { font-size: 6px; margin: 1px 0; }
+    .stat-bar { width: 30px; height: 4px; }
+    .select-title { font-size: 11px; margin-bottom: 4px; }
+    .btn-row .menu-btn { padding: 5px 6px; font-size: 8px; }
+  }
 </style>
 </head>
 <body>
@@ -586,14 +637,28 @@
 
   <!-- 移动端触控（摇杆 + 开火/技能/暂停；双人模式左右分区） -->
   <div id="touch-controls">
-    <div id="tc-pause">⏸</div>
-    <div id="tc-joy"><div id="tc-knob"></div></div>
-    <div id="tc-skill" class="tc-btn">⚡</div>
-    <div id="tc-fire" class="tc-btn">🔥</div>
+    <div id="tc-pause">⏸<span class="tc-label" style="top:44px;">暂停</span></div>
+    <div id="tc-joy">
+      <div id="tc-knob"></div>
+      <span class="tc-joy-arrow up">▲</span>
+      <span class="tc-joy-arrow down">▼</span>
+      <span class="tc-joy-arrow left">◀</span>
+      <span class="tc-joy-arrow right">▶</span>
+      <span class="tc-label" style="bottom:-14px;top:auto;">P1 移动</span>
+    </div>
+    <div id="tc-skill" class="tc-btn">⚡<span class="tc-label">技能</span></div>
+    <div id="tc-fire" class="tc-btn">🔥<span class="tc-label">开火</span></div>
     <!-- P2 操作区（仅双人模式显示，右手区） -->
-    <div id="tc-joy2"><div id="tc-knob2"></div></div>
-    <div id="tc-skill2" class="tc-btn">⚡</div>
-    <div id="tc-fire2" class="tc-btn">💥</div>
+    <div id="tc-joy2">
+      <div id="tc-knob2"></div>
+      <span class="tc-joy-arrow up">▲</span>
+      <span class="tc-joy-arrow down">▼</span>
+      <span class="tc-joy-arrow left">◀</span>
+      <span class="tc-joy-arrow right">▶</span>
+      <span class="tc-label" style="bottom:-14px;top:auto;color:rgba(255,160,140,0.7);">P2 移动</span>
+    </div>
+    <div id="tc-skill2" class="tc-btn">⚡<span class="tc-label" style="color:rgba(255,160,140,0.7);">技能</span></div>
+    <div id="tc-fire2" class="tc-btn">💥<span class="tc-label" style="color:rgba(255,160,140,0.7);">开火</span></div>
   </div>
 
   <!-- 双人模式横屏提示（竖屏时顶部小卡片，不阻断游戏） -->
