@@ -9,6 +9,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body {
     width: 100%; height: 100%;
+    min-height: 100dvh;
     background: #0a0a1a;
     font-family: 'Press Start 2P', 'Courier New', monospace;
     overflow: hidden;
@@ -436,23 +437,28 @@
       width: 40px; height: 40px; font-size: 14px;
     }
   }
-  /* —— 双人模式横屏提示（竖屏时显示） —— */
+  /* —— 双人模式横屏提示（竖屏时显示，不阻断游戏） —— */
   #rotate-hint {
-    position: absolute; inset: 0; z-index: 175;
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    gap: 14px; text-align: center;
-    background: rgba(5,8,18,0.9);
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    z-index: 176;
+    display: none; flex-direction: row; align-items: center; justify-content: center;
+    gap: 10px; text-align: center;
+    padding: 10px 18px;
+    max-width: 92vw;
+    background: rgba(5,8,18,0.92);
+    border: 1px solid rgba(110,160,255,0.4);
+    border-radius: 8px;
     color: #bcd6ff;
   }
   #rotate-hint.show { display: flex; }
-  #rotate-hint .rh-icon { font-size: 54px; animation: rhSpin 2.2s ease-in-out infinite; }
+  #rotate-hint .rh-icon { font-size: 28px; animation: rhSpin 2.2s ease-in-out infinite; }
   @keyframes rhSpin {
     0%, 20% { transform: rotate(0deg); }
     55%, 80% { transform: rotate(90deg); }
     100% { transform: rotate(0deg); }
   }
-  #rotate-hint .rh-text { font-size: 13px; letter-spacing: 2px; line-height: 2; padding: 0 20px; }
-  #rotate-hint .rh-skip { font-size: 11px; color: #667799; text-decoration: underline dotted; cursor: pointer; padding: 10px; }
+  #rotate-hint .rh-text { font-size: 11px; letter-spacing: 1px; line-height: 1.6; }
+  #rotate-hint .rh-skip { font-size: 10px; color: #667799; text-decoration: underline dotted; cursor: pointer; padding: 4px 8px; white-space: nowrap; }
   /* ===== 进入模式温馨提示 ===== */
   #mode-tip {
     position: absolute; top: 64px; left: 50%;
@@ -590,11 +596,11 @@
     <div id="tc-fire2" class="tc-btn">💥</div>
   </div>
 
-  <!-- 双人模式横屏提示（竖屏时显示，转到横屏自动消失） -->
+  <!-- 双人模式横屏提示（竖屏时顶部小卡片，不阻断游戏） -->
   <div id="rotate-hint">
     <div class="rh-icon">📱</div>
-    <div class="rh-text">双人模式建议横屏游玩<br>左右两侧分别为 P1 / P2 操作区</div>
-    <div class="rh-skip" onclick="Game.dismissRotateHint()">仍要竖屏游玩 ›</div>
+    <div class="rh-text">建议横屏游玩 · 左右分区操作</div>
+    <div class="rh-skip" onclick="Game.dismissRotateHint()">知道了 ›</div>
   </div>
 
   <!-- 进入模式温馨提示 -->
@@ -866,13 +872,6 @@ const TouchControls = {
       });
     }
 
-    // 双人模式横竖屏切换：转横屏自动收起提示（不中途弹出打扰）
-    const onOrientChange = () => {
-      if (typeof Game !== 'undefined' && Game.running) Game._updateDualLayout(false);
-    };
-    window.addEventListener('resize', onOrientChange);
-    window.addEventListener('orientationchange', () => setTimeout(onOrientChange, 150));
-
     // 阻止长按菜单与误触
     document.getElementById('game-container').addEventListener('contextmenu', e => e.preventDefault());
   },
@@ -894,6 +893,27 @@ const TouchControls = {
     }
   }
 };
+
+// ============================================================
+// 全局横竖屏检测：matchMedia + resize + orientationchange 三重保险
+// 横屏时自动收起双人竖屏提示，不阻断游戏
+// ============================================================
+(function() {
+  const mqLandscape = window.matchMedia('(orientation: landscape)');
+  const mqPortrait = window.matchMedia('(orientation: portrait)');
+  const onOrient = () => {
+    if (typeof Game !== 'undefined' && Game.running) Game._updateDualLayout(false);
+  };
+  window.addEventListener('resize', onOrient);
+  window.addEventListener('orientationchange', () => setTimeout(onOrient, 150));
+  if (mqLandscape.addEventListener) {
+    mqLandscape.addEventListener('change', onOrient);
+    mqPortrait.addEventListener('change', onOrient);
+  } else if (mqLandscape.addListener) {
+    mqLandscape.addListener(onOrient);
+    mqPortrait.addListener(onOrient);
+  }
+})();
 
 // ============================================================
 // 配置数据
@@ -2356,31 +2376,40 @@ const TutorialGuide = {
   // —— 单人闯关教程（7步：6步基础 + 1步保存成就） ——
   stepsSingle: [
     { title: '欢迎！', text: '指挥官你好！我是鱿鱼向导小墨～\n欢迎来到《钢铁洪流》坦克大战！', trigger: 'click', highlight: null },
-    { title: '操作方式', text: '【玩家1键位】\n移动：W A S D 键\n开火：J 键 / 空格键 / F\n技能：Q 键 或 E 键\n（方向键也可用于移动）', trigger: 'move', highlight: 'player' },
+    { title: '操作方式', text: '【玩家1键位】\n移动：W A S D 键\n开火：J 键 / 空格键 / F\n技能：Q 键 或 E 键\n（方向键也可用于移动）',
+      textTouch: '【移动端操作】\n📱 左下虚拟摇杆：滑动控制方向\n🔥 右下开火键：按住持续射击\n⚡ 技能键：点按释放技能\n⏸ 右上角暂停键：打开暂停面板', trigger: 'move', highlight: 'player' },
     { title: '地形说明', text: '🟫 砖墙可被摧毁\n⬜ 钢墙坚不可摧\n🟦 水面无法通过\n🌲 草丛可以藏身', trigger: 'click', highlight: 'map' },
     { title: '随机地形', text: '注意看战场环境！\n砖墙集群、水域、草丛每局随机生成\n每次开战都是全新战场\n砖墙可破坏，打出属于你的路线！', trigger: 'click', highlight: 'ys' },
     { title: '底图字样', text: '击败敌人获得积分\n可以点亮底图的「钢铁洪流」字样\n战斗越激烈，字样效果越炫酷！', trigger: 'click', highlight: 'brand' },
-    { title: '暂停·成就存档', text: '【重要提醒】\n每次打开网页会重置当前解锁成就！\n\n按 ESC 或 P 键打开暂停面板\n→ 点击「💾 保存成就达成时间」按钮\n→ 你已解锁的成就会记录真实时间\n→ 关闭页面后重开，永久成就仍在展馆！\n（建议达到里程碑后立刻保存！）', trigger: 'click', highlight: null },
+    { title: '暂停·成就存档', text: '【重要提醒】\n每次打开网页会重置当前解锁成就！\n\n按 ESC 或 P 键打开暂停面板\n→ 点击「💾 保存成就达成时间」按钮\n→ 你已解锁的成就会记录真实时间\n→ 关闭页面后重开，永久成就仍在展馆！\n（建议达到里程碑后立刻保存！）',
+      textTouch: '【重要提醒】\n每次打开网页会重置当前解锁成就！\n\n点右上角 ⏸ 暂停键打开面板\n→ 点击「💾 保存成就达成时间」按钮\n→ 你已解锁的成就会记录真实时间\n→ 关闭页面后重开，永久成就仍在展馆！\n（建议达到里程碑后立刻保存！）', trigger: 'click', highlight: null },
     { title: '准备开战', text: '击毁敌车赚取积分，积分达到8000时Boss登场！\n指挥官，战斗开始！\n\n—— 新人制作，产品简陋请见谅！——', trigger: 'click', highlight: null }
   ],
   // —— 双人协作教程（7步） ——
   stepsCoop: [
-    { title: '双人协作 · 同盟出击！', text: '欢迎两位指挥官！\n请确认两台手柄（键盘）就位～\n鱿鱼向导小墨将指引你们并肩作战！', trigger: 'click', highlight: null },
-    { title: '【P1】玩家1键位', text: '【蓝方·玩家1】\n移动：W A S D\n开火：J 键 / F 键（双人模式方向键仅P2可用）\n技能：Q 键 或 E 键\n（左手操作，建议坐在左侧）', trigger: 'click', highlight: 'p1' },
-    { title: '【P2】玩家2键位', text: '【红方·玩家2】\n移动：↑ ↓ ← → 方向键\n开火：Enter / 右Ctrl / ? / 键\n技能：\\ 反斜杠 或 Shift 键\n（右手操作，建议坐在右侧）\n\n⚠ 注意：双人模式下方向键只控制P2！', trigger: 'click', highlight: 'p2' },
+    { title: '双人协作 · 同盟出击！', text: '欢迎两位指挥官！\n请确认两台手柄（键盘）就位～\n鱿鱼向导小墨将指引你们并肩作战！',
+      textTouch: '欢迎两位指挥官！\n建议横屏游玩，左右分区操作～\n鱿鱼向导小墨将指引你们并肩作战！', trigger: 'click', highlight: null },
+    { title: '【P1】玩家1键位', text: '【蓝方·玩家1】\n移动：W A S D\n开火：J 键 / F 键（双人模式方向键仅P2可用）\n技能：Q 键 或 E 键\n（左手操作，建议坐在左侧）',
+      textTouch: '【蓝方·玩家1】\n📱 屏幕左侧虚拟摇杆：移动\n🔥 左侧开火键：按住射击\n⚡ 左侧技能键：点按释放\n（横屏左手操作左侧区域）', trigger: 'click', highlight: 'p1' },
+    { title: '【P2】玩家2键位', text: '【红方·玩家2】\n移动：↑ ↓ ← → 方向键\n开火：Enter / 右Ctrl / ? / 键\n技能：\\ 反斜杠 或 Shift 键\n（右手操作，建议坐在右侧）\n\n⚠ 注意：双人模式下方向键只控制P2！',
+      textTouch: '【红方·玩家2】\n📱 屏幕右侧虚拟摇杆：移动\n💥 右侧开火键：按住射击\n⚡ 右侧技能键：点按释放\n（横屏右手操作右侧区域）', trigger: 'click', highlight: 'p2' },
     { title: '协作法则', text: '【共同目标】\n• 积分共享，击杀敌人双方都能充能\n• 一人倒下另一人可继续战斗，存活=胜利\n• 技能Q / \\ 互补，突击+重装推图最稳\n• 达到8000分，协力挑战BOSS！', trigger: 'click', highlight: null },
     { title: '随机地形', text: '战场掩体每局随机生成\n每局开战前先观察地形分布\n善用地形，打出钢铁同盟的默契！', trigger: 'click', highlight: 'ys' },
-    { title: '暂停·成就存档', text: '【重要提醒】\n每次打开网页会重置当前解锁成就！\n\n由任意一方按 ESC 或 P 键打开暂停面板\n→ 点击「💾 保存成就达成时间」按钮\n→ 两人共同的战绩会永久存档！\n（击败Boss前后记得保存～）', trigger: 'click', highlight: null },
+    { title: '暂停·成就存档', text: '【重要提醒】\n每次打开网页会重置当前解锁成就！\n\n由任意一方按 ESC 或 P 键打开暂停面板\n→ 点击「💾 保存成就达成时间」按钮\n→ 两人共同的战绩会永久存档！\n（击败Boss前后记得保存～）',
+      textTouch: '【重要提醒】\n每次打开网页会重置当前解锁成就！\n\n点右上角 ⏸ 暂停键打开面板\n→ 点击「💾 保存成就达成时间」按钮\n→ 两人共同的战绩会永久存档！\n（击败Boss前后记得保存～）', trigger: 'click', highlight: null },
     { title: '准备并肩作战！', text: '胜负不再是一个人的事\n保护好你的战友，把后背交给彼此！\n指挥官们，战斗开始！\n\n—— 新人制作，产品简陋请见谅！——', trigger: 'click', highlight: null }
   ],
   // —— 双人对抗教程（7步） ——
   stepsPvp: [
     { title: '双人对抗 · 决斗场！', text: '欢迎两位指挥官来到决斗场！\n一决雌雄的时候到了～\n鱿鱼向导小墨将说明决斗规则！', trigger: 'click', highlight: null },
-    { title: '【P1】蓝方键位', text: '【蓝方·玩家1】\n移动：W A S D\n开火：J 键 / F 键（双人模式方向键仅P2可用）\n技能：Q 键 或 E 键\n（左手操作，出生在左下方）', trigger: 'click', highlight: 'p1' },
-    { title: '【P2】红方键位', text: '【红方·玩家2】\n移动：↑ ↓ ← → 方向键\n开火：Enter / 右Ctrl / ? / 键\n技能：\\ 反斜杠 或 Shift 键\n（右手操作，出生在右下方）\n\n⚠ 注意：双人模式下方向键只控制P2！', trigger: 'click', highlight: 'p2' },
+    { title: '【P1】蓝方键位', text: '【蓝方·玩家1】\n移动：W A S D\n开火：J 键 / F 键（双人模式方向键仅P2可用）\n技能：Q 键 或 E 键\n（左手操作，出生在左下方）',
+      textTouch: '【蓝方·玩家1】\n📱 屏幕左侧虚拟摇杆：移动\n🔥 左侧开火键：按住射击\n⚡ 左侧技能键：点按释放\n（横屏左手操作，出生在左下方）', trigger: 'click', highlight: 'p1' },
+    { title: '【P2】红方键位', text: '【红方·玩家2】\n移动：↑ ↓ ← → 方向键\n开火：Enter / 右Ctrl / ? / 键\n技能：\\ 反斜杠 或 Shift 键\n（右手操作，出生在右下方）\n\n⚠ 注意：双人模式下方向键只控制P2！',
+      textTouch: '【红方·玩家2】\n📱 屏幕右侧虚拟摇杆：移动\n💥 右侧开火键：按住射击\n⚡ 右侧技能键：点按释放\n（横屏右手操作，出生在右下方）', trigger: 'click', highlight: 'p2' },
     { title: '决斗规则', text: '【胜利条件】\n• 先击落对方 3 次者直接获胜\n• 击落=击杀+1，被击落=死亡+1\n• 期间会刷出AI敌人干扰，它们同样有威胁\n• 队友伤害已开启，子弹不会手下留情！', trigger: 'click', highlight: null },
     { title: '地形+战术提示', text: '• 砖墙可被打破，开辟奇袭路线\n• 钢墙是永久掩体，架炮互射的好地方\n• 草丛可藏身，适合特工型坦克偷袭\n• 地形每局随机，开战先观察战场！', trigger: 'click', highlight: 'ys' },
-    { title: '暂停·成就存档', text: '【重要提醒】\n每次打开网页会重置当前解锁成就！\n\n决斗到精彩处可按 ESC 或 P 键暂停\n→ 点击「💾 保存成就达成时间」按钮\n→ 胜负战绩与里程碑成就永久存档！\n（打完别忘了保存胜利者的战绩！）', trigger: 'click', highlight: null },
+    { title: '暂停·成就存档', text: '【重要提醒】\n每次打开网页会重置当前解锁成就！\n\n决斗到精彩处可按 ESC 或 P 键暂停\n→ 点击「💾 保存成就达成时间」按钮\n→ 胜负战绩与里程碑成就永久存档！\n（打完别忘了保存胜利者的战绩！）',
+      textTouch: '【重要提醒】\n每次打开网页会重置当前解锁成就！\n\n决斗到精彩处点右上角 ⏸ 暂停键\n→ 点击「💾 保存成就达成时间」按钮\n→ 胜负战绩与里程碑成就永久存档！\n（打完别忘了保存胜利者的战绩！）', trigger: 'click', highlight: null },
     { title: '决斗开始！', text: '点到为止，祝你们打得尽兴！\n胜不骄败不馁，友谊第一比赛第二～\n倒计时结束后，立即开火！\n\n—— 新人制作，产品简陋请见谅！——', trigger: 'click', highlight: null }
   ],
   moveProgress: 0,
@@ -2425,7 +2454,9 @@ const TutorialGuide = {
     if (!d) return;
     const s = this.steps[this.step];
     d.querySelector('.tut-title').textContent = s.title;
-    d.querySelector('.tut-text').textContent = s.text;
+    // 触屏设备使用 textTouch 文案（移动端教程），否则用键盘文案（PC端教程）
+    const useTouch = (typeof TouchControls !== 'undefined' && TouchControls.enabled);
+    d.querySelector('.tut-text').textContent = (useTouch && s.textTouch) ? s.textTouch : s.text;
     // 步骤进度
     const ind = d.querySelector('.tut-step-indicator');
     if (ind) ind.textContent = `第 ${this.step + 1} / ${this.steps.length} 步`;
