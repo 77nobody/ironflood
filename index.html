@@ -294,6 +294,9 @@
     100% { transform: translateX(-50%) translateY(0); opacity: 1; }
   }
   #tutorial-dialog.active { display: flex !important; }
+  /* 教程激活时禁用触控层交互，防止按钮拦截教程点击 */
+  #touch-controls.tutorial-active { pointer-events: none !important; }
+  #touch-controls.tutorial-active * { pointer-events: none !important; }
   /* ===== 移动端触控控件（仅触屏设备、游戏中显示） ===== */
   #touch-controls {
     position: absolute; inset: 0;
@@ -501,6 +504,20 @@
   /* 触屏窄屏：教程弹窗抬高，避开底部虚拟摇杆/按键 */
   @media (pointer: coarse) and (max-width: 700px) {
     #tutorial-dialog { bottom: 178px !important; }
+  }
+  /* 双人模式触屏：教程弹窗需更高避开两侧摇杆+开火键 */
+  #tutorial-dialog.dual-mode { bottom: 210px !important; }
+  /* 横屏矮屏：教程弹窗改为顶部定位，避开底部双侧触控区 */
+  @media (orientation: landscape) and (max-height: 500px) {
+    #tutorial-dialog {
+      bottom: auto !important;
+      top: 8px !important;
+      width: min(96vw, 600px) !important;
+      max-height: calc(100vh - 16px) !important;
+      overflow-y: auto !important;
+    }
+    #tutorial-dialog.dual-mode { top: 8px !important; bottom: auto !important; }
+    #tutorial-dialog .tut-text { max-height: 28vh; overflow-y: auto; }
   }
   @media (max-width: 700px) {
     .game-title { font-size: 34px; letter-spacing: 3px; }
@@ -2487,6 +2504,8 @@ const TutorialGuide = {
     this.step = 0;
     this.moveProgress = 0;
     document.getElementById('tutorial-dialog')?.classList.add('active');
+    // 禁用触控层交互，防止按钮拦截教程的"继续/跳过"点击
+    document.getElementById('touch-controls')?.classList.add('tutorial-active');
     this._updateDialog();
   },
   end() {
@@ -2496,6 +2515,8 @@ const TutorialGuide = {
     localStorage.setItem(key, '1');
     localStorage.setItem('tkdz_tutorialSeen', '1'); // 兼容旧字段
     document.getElementById('tutorial-dialog')?.classList.remove('active');
+    // 恢复触控层交互
+    document.getElementById('touch-controls')?.classList.remove('tutorial-active');
     // 教程结束后再显示双人横屏提示（若仍竖屏）
     if (typeof Game !== 'undefined' && Game.running) Game._updateDualLayout(true);
   },
@@ -2529,6 +2550,12 @@ const TutorialGuide = {
     d.style.border = this.mode === 'coop' ? '2px solid #66ffaa'
                    : this.mode === 'pvp'  ? '2px solid #ff6666'
                    : '2px solid #6fa7ff';
+    // 双人模式触屏：教程弹窗上移避开两侧触控区
+    if (useTouch && this.mode !== 'single') {
+      d.classList.add('dual-mode');
+    } else {
+      d.classList.remove('dual-mode');
+    }
     const btn = d.querySelector('.tut-next');
     btn.textContent = s.trigger === 'click' ? '继续 ▶' : '（移动中...）';
     btn.disabled = s.trigger !== 'click';
@@ -2611,8 +2638,8 @@ const Game = {
   _addTutorialHTML() {
     const html = `
     <div id="tutorial-dialog" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:min(94vw,640px);
-      background:rgba(12,18,36,0.92);border:3px solid #4a8aff;box-shadow:0 0 30px rgba(80,150,255,0.5);
-      display:none;z-index:150;padding:16px;flex-direction:row;gap:16px;">
+      background:rgba(12,18,36,0.95);border:3px solid #4a8aff;box-shadow:0 0 30px rgba(80,150,255,0.5);
+      display:none;z-index:210;padding:16px;flex-direction:row;gap:16px;">
       <div style="width:90px;height:90px;flex-shrink:0;position:relative;">
         <canvas id="mascot-canvas" width="90" height="90" style="image-rendering:pixelated;width:90px;height:90px;"></canvas>
       </div>
