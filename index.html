@@ -455,6 +455,53 @@
       width: 40px; height: 40px; font-size: 14px;
     }
   }
+  /* —— 强制横屏（微信等内置浏览器锁定竖屏时，双人模式旋转画面模拟横屏） ——
+     容器由 JS 设为 宽=innerHeight 高=innerWidth，rotate(90deg)+translateY(-100%) 恰好铺满竖屏视口 */
+  #game-container.forced-landscape {
+    position: fixed;
+    top: 0; left: 0;
+    transform-origin: top left;
+    transform: rotate(90deg) translateY(-100%);
+  }
+  #game-container.forced-landscape #game-canvas {
+    max-width: 100%; max-height: 100%;
+  }
+  /* 强制横屏下恢复宽屏控件布局（覆盖上方竖屏媒体查询的窄屏回退） */
+  #game-container.forced-landscape #touch-controls.dual #tc-joy {
+    left: calc(16px + env(safe-area-inset-left)); bottom: calc(18px + env(safe-area-inset-bottom));
+    width: 110px; height: 110px;
+  }
+  #game-container.forced-landscape #touch-controls.dual #tc-knob { width: 50px; height: 50px; margin: -25px 0 0 -25px; }
+  #game-container.forced-landscape #touch-controls.dual #tc-fire {
+    left: calc(134px + env(safe-area-inset-left)); right: auto; bottom: calc(20px + env(safe-area-inset-bottom));
+    width: 62px; height: 62px; font-size: 20px;
+  }
+  #game-container.forced-landscape #touch-controls.dual #tc-skill {
+    left: calc(142px + env(safe-area-inset-left)); right: auto; bottom: calc(94px + env(safe-area-inset-bottom));
+    width: 46px; height: 46px; font-size: 16px;
+  }
+  #game-container.forced-landscape #touch-controls.dual #tc-joy2 {
+    right: calc(16px + env(safe-area-inset-right)); bottom: calc(18px + env(safe-area-inset-bottom));
+    width: 110px; height: 110px;
+  }
+  #game-container.forced-landscape #touch-controls.dual #tc-knob2 { width: 50px; height: 50px; margin: -25px 0 0 -25px; }
+  #game-container.forced-landscape #touch-controls.dual #tc-fire2 {
+    right: calc(134px + env(safe-area-inset-right)); bottom: calc(20px + env(safe-area-inset-bottom));
+    width: 62px; height: 62px; font-size: 20px;
+  }
+  #game-container.forced-landscape #touch-controls.dual #tc-skill2 {
+    right: calc(142px + env(safe-area-inset-right)); bottom: calc(94px + env(safe-area-inset-bottom));
+    width: 46px; height: 46px; font-size: 16px;
+  }
+  /* 强制横屏下教程弹窗改为顶部定位（同横屏矮屏规则），宽度基于旋转后容器 */
+  #game-container.forced-landscape #tutorial-dialog {
+    bottom: auto !important;
+    top: 8px !important;
+    width: min(96%, 600px) !important;
+    max-height: calc(100% - 16px) !important;
+    overflow-y: auto !important;
+  }
+  #game-container.forced-landscape #tutorial-dialog .tut-text { max-height: 28vh; overflow-y: auto; }
   /* —— 双人模式横屏提示（竖屏时显示，不阻断游戏） —— */
   #rotate-hint {
     position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
@@ -850,14 +897,16 @@ const TouchControls = {
       try { joy.setPointerCapture(joyId); } catch (err) {}
       const r = joy.getBoundingClientRect();
       cx = r.left + r.width / 2; cy = r.top + r.height / 2;
-      TouchControls._moveKnob(knob, cx, cy, e.clientX, e.clientY, R);
-      setDir(e.clientX - cx, e.clientY - cy);
+      const d = TouchControls._mapDelta(e.clientX - cx, e.clientY - cy);
+      TouchControls._moveKnob(knob, d[0], d[1], R);
+      setDir(d[0], d[1]);
     });
     joy.addEventListener('pointermove', e => {
       if (e.pointerId !== joyId) return;
       e.preventDefault();
-      TouchControls._moveKnob(knob, cx, cy, e.clientX, e.clientY, R);
-      setDir(e.clientX - cx, e.clientY - cy);
+      const d = TouchControls._mapDelta(e.clientX - cx, e.clientY - cy);
+      TouchControls._moveKnob(knob, d[0], d[1], R);
+      setDir(d[0], d[1]);
     });
     const endJoy = e => {
       if (e.pointerId !== joyId) return;
@@ -916,14 +965,16 @@ const TouchControls = {
         try { joy2.setPointerCapture(joy2Id); } catch (err) {}
         const r = joy2.getBoundingClientRect();
         c2x = r.left + r.width / 2; c2y = r.top + r.height / 2;
-        TouchControls._moveKnob(knob2, c2x, c2y, e.clientX, e.clientY, R2);
-        setDir2(e.clientX - c2x, e.clientY - c2y);
+        const d = TouchControls._mapDelta(e.clientX - c2x, e.clientY - c2y);
+        TouchControls._moveKnob(knob2, d[0], d[1], R2);
+        setDir2(d[0], d[1]);
       });
       joy2.addEventListener('pointermove', e => {
         if (e.pointerId !== joy2Id) return;
         e.preventDefault();
-        TouchControls._moveKnob(knob2, c2x, c2y, e.clientX, e.clientY, R2);
-        setDir2(e.clientX - c2x, e.clientY - c2y);
+        const d = TouchControls._mapDelta(e.clientX - c2x, e.clientY - c2y);
+        TouchControls._moveKnob(knob2, d[0], d[1], R2);
+        setDir2(d[0], d[1]);
       });
       const endJoy2 = e => {
         if (e.pointerId !== joy2Id) return;
@@ -957,8 +1008,12 @@ const TouchControls = {
     // 阻止长按菜单与误触
     document.getElementById('game-container').addEventListener('contextmenu', e => e.preventDefault());
   },
-  _moveKnob(knob, cx, cy, px, py, max) {
-    let dx = px - cx, dy = py - cy;
+  // 强制横屏时（容器旋转90°），把视口位移换算为游戏坐标位移：局部 = (vy, -vx)
+  _mapDelta(dx, dy) {
+    if (typeof Game !== 'undefined' && Game._forcedLandscape) return [dy, -dx];
+    return [dx, dy];
+  },
+  _moveKnob(knob, dx, dy, max) {
     const len = Math.hypot(dx, dy);
     if (len > max) { dx = dx / len * max; dy = dy / len * max; }
     knob.style.transform = `translate(${dx}px, ${dy}px)`;
@@ -984,7 +1039,7 @@ const TouchControls = {
   const mqLandscape = window.matchMedia('(orientation: landscape)');
   const mqPortrait = window.matchMedia('(orientation: portrait)');
   const onOrient = () => {
-    if (typeof Game !== 'undefined' && Game.running) Game._updateDualLayout(false);
+    if (typeof Game !== 'undefined' && Game._updateDualLayout) Game._updateDualLayout(false);
   };
   window.addEventListener('resize', onOrient);
   window.addEventListener('orientationchange', () => setTimeout(onOrient, 150));
@@ -2940,6 +2995,11 @@ const Game = {
     document.getElementById('pause-overlay').style.display = 'none';
     document.getElementById('menu-overlay').classList.remove('hidden');
     TutorialGuide.end();
+    // 退出真实横屏（若此前进入了全屏+方向锁定）
+    try {
+      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
+    } catch (err) {}
+    this._updateDualLayout(false); // 复位强制横屏旋转
     this._menuLoop(); // 重启菜单背景渲染（游戏中已停止）
   },
   confirmTank() {
@@ -3133,6 +3193,7 @@ const Game = {
     this.lastTs = performance.now();
     TouchControls.show(true);
     if (runTutorial) TutorialGuide.start(this.mode);
+    if (this.mode !== 'single' && TouchControls.enabled) this._tryRealLandscape();
     this._updateDualLayout(true);
     this._showModeTip();
     requestAnimationFrame((ts) => this._loop(ts));
@@ -3143,7 +3204,7 @@ const Game = {
     const el = document.getElementById('mode-tip');
     if (!el) return;
     el.textContent = '💡 温馨提示：如遇问题，请退出至主页面重新进入'
-      + (this.mode !== 'single' ? '（移动端双人：左侧 P1 / 右侧 P2 分区触控，建议横屏游玩）' : '');
+      + (this.mode !== 'single' ? '（移动端双人：左侧 P1 / 右侧 P2 分区触控，竖屏会自动旋转为横屏画面）' : '');
     el.classList.remove('show');
     void el.offsetWidth; // 强制重排以重启动画
     el.classList.add('show');
@@ -3153,8 +3214,14 @@ const Game = {
   _updateDualLayout(allowHint = false) {
     const tc = document.getElementById('touch-controls');
     if (tc) tc.classList.toggle('dual', this.running && this.mode && this.mode !== 'single');
+    this._applyForcedLandscape();
     const hint = document.getElementById('rotate-hint');
     if (!hint) return;
+    const forced = !!this._forcedLandscape;
+    const textEl = hint.querySelector('.rh-text');
+    if (textEl) textEl.textContent = forced
+      ? '已自动横屏 · 请横向握持手机，左右分区操作'
+      : '建议横屏游玩 · 左右分区操作';
     const show = !!allowHint
       && this.running && this.mode && this.mode !== 'single'
       && TouchControls.enabled
@@ -3162,6 +3229,53 @@ const Game = {
       && window.innerHeight > window.innerWidth
       && !this._rotateHintDismissed;
     hint.classList.toggle('show', show);
+  },
+
+  // —— 强制横屏：微信等内置浏览器常锁定竖屏，双人模式用 CSS 旋转模拟横屏 ——
+  // 触发条件：触屏设备 + 双人模式（游戏中或结算界面）+ 视口仍为竖屏
+  _wantsForcedLandscape() {
+    if (!TouchControls.enabled) return false;
+    if (!this.mode || this.mode === 'single') return false;
+    const resultOn = !!(document.getElementById('result-overlay') || {}).classList &&
+      document.getElementById('result-overlay').classList.contains('active');
+    if (!this.running && !resultOn) return false;
+    return window.innerHeight > window.innerWidth;
+  },
+  _applyForcedLandscape() {
+    const c = document.getElementById('game-container');
+    if (!c) return;
+    const on = this._wantsForcedLandscape();
+    this._forcedLandscape = on;
+    if (on) {
+      c.classList.add('forced-landscape');
+      c.style.width = window.innerHeight + 'px';
+      c.style.height = window.innerWidth + 'px';
+    } else if (c.classList.contains('forced-landscape')) {
+      c.classList.remove('forced-landscape');
+      c.style.width = '';
+      c.style.height = '';
+    }
+  },
+
+  // —— 尝试真实横屏：全屏 + 方向锁定（部分安卓微信/浏览器支持），失败则由强制横屏兜底 ——
+  _tryRealLandscape() {
+    if (window.innerHeight <= window.innerWidth) return; // 已是横屏则无需处理
+    try {
+      const el = document.documentElement;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req && !document.fullscreenElement && !document.webkitFullscreenElement) {
+        const p = req.call(el);
+        if (p && p.catch) p.catch(() => {});
+      }
+    } catch (err) {}
+    setTimeout(() => {
+      try {
+        if (screen.orientation && screen.orientation.lock) {
+          const p = screen.orientation.lock('landscape');
+          if (p && p.catch) p.catch(() => {});
+        }
+      } catch (err) {}
+    }, 400);
   },
 
   // 用户选择"仍要竖屏游玩"后，本次页面会话内不再提示
